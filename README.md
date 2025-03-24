@@ -88,26 +88,11 @@ The [`PertModule`](ulib/pert_module.py) is a crucial component of the library. I
 
 The [`UnivAttack`](ulib/attack.py) class (and its subclass [`OptimAttack`](ulib/attack.py)) serves as the base class for all attack implementations.
 
-*   **Initialization:** Takes the [`PertModule`](ulib/pert_module.py), optimizer (for `OptimAttack`), and other attack-specific parameters as input.
+*   **Initialization:** Takes the [`PertModule`](ulib/pert_module.py), optimizer (for `OptimAttack`), and other attack-specific parameters as input. It accepts optional `log_dir` argument to log metrics during training.
 *   **Functionality:**
-    *   `fit()`: The main method for generating the UAP. It iterates through the training dataset and updates the perturbation.  It accepts optional `logger` argument to log metrics during training.
+    *   `fit()`: The main method for generating the UAP. It iterates through the training dataset and updates the perturbation. 
     *   `close()`: Cleans up resources after the attack is finished.
     *   Handles logging and checkpointing.
-
-### [`Logger`](ulib/logger.py)
-
-The [`Logger`](ulib/logger.py) class provides a simple interface for logging experiment data using TensorBoard and potentially other platforms like CometML.
-
-*   **Initialization:** Takes a root directory as input.
-*   **Functionality:**
-    *   `register_hparams()`: Registers hyperparameters for the experiment.
-    *   `initialize()`: Initializes the logging, creating subdirectories and connecting to CometML if configured.
-    *   `log_metrics()`: Logs metrics such as loss and accuracy.
-    *   `log_scalar()`: Logs a single scalar value.
-    *   `log_image()`: Logs adversarial images.
-    *   `add_graph()`: Adds the model graph to the log.
-    *   `close()`: Closes the logger, flushing any remaining data.
-    *   `log_dir()`: Returns the directory where logs are stored.
 
 ### [`DataExtractor`](ulib/data/data_extractor.py)
 
@@ -129,6 +114,7 @@ This example demonstrates how to use the `GD_UAP` attack to generate a universal
 ```python
 import torch
 import torch.optim as optim
+from ulib import eval
 from ulib.pert_module import PertModule
 from ulib.attacks.gd_uap import GD_UAP
 from ulib.attack import StopCriteria
@@ -149,102 +135,23 @@ attack = GD_UAP(
     optimizer=optimizer,
     data_dependant=True,
     sat_thresh=0.5,
-    sat_delta=1e-5
+    sat_delta=1e-5,
+    log_dir="logs",
 )
 
 # 5. Define stopping criteria
 stop = StopCriteria(max_epochs=10, max_time=600)
 
 # 6. Run the attack
-perturbation = attack.fit(dl_train, dl_eval, stop)
+pert_tensor = attack.fit(dl_train, dl_eval, stop)
 
 # 7. Close the attack
 attack.close()
 
 print("UAP Generated!")
-```
 
-### Running an Experiment with Logging
-
-This example shows how to use the `Logger` class to log experiment data.
-
-```python
-import torch
-import torch.optim as optim
-from ulib.pert_module import PertModule
-from ulib.attacks.gd_uap import GD_UAP
-from ulib.attack import StopCriteria
-from ulib.logger import Logger
-from notebooks.experiment_robust import load_robust_experiment
-
-# 1. Load a model and data loaders
-model, dl_train, dl_eval = load_robust_experiment("Standard", "cifar10")
-
-# 2. Create a PertModule
-pert_model = PertModule(model, data_shape=next(iter(dl_train))[0].shape[1:], eps=8/255)
-
-# 3. Define an optimizer
-optimizer = optim.Adam(pert_model.parameters(), lr=1e-3)
-
-# 4. Initialize the attack
-attack = GD_UAP(
-    pert_model=pert_model,
-    optimizer=optimizer,
-    data_dependant=True,
-    sat_thresh=0.5,
-    sat_delta=1e-5
-)
-
-# 5. Define stopping criteria
-stop = StopCriteria(max_epochs=10, max_time=600)
-
-# 6. Initialize the logger
-logger = Logger(root_dir="runs")
-logger.initialize("gd_uap_experiment")
-logger.register_hparams({"learning_rate": 1e-3, "epsilon": 8/255})
-logger.log_hparams()
-
-# 7. Run the attack
-perturbation = attack.fit(dl_train, dl_eval, stop, logger=logger)
-
-# 8. Close the attack and logger
-attack.close()
-logger.close()
-
-print(f"UAP Generated! Logs saved to {logger.log_dir()}")
-```
-
-### Using the DataExtractor
-
-This example demonstrates how to use the `DataExtractor` to split a dataset based on correctness.
-
-```python
-import torch
-from torch.utils.data import DataLoader, TensorDataset
-from ulib.data.data_extractor import DataExtractor
-from torch import nn
-
-# 1. Create a dummy model and dataset
-model = nn.Linear(10, 2)  # Example model
-data = torch.randn(100, 10)
-targets = torch.randint(0, 2, (100,))
-dataset = TensorDataset(data, targets)
-loader = DataLoader(dataset, batch_size=32)
-
-# 2. Initialize the DataExtractor
-extractor = DataExtractor(model)
-
-# 3. Define a prediction function (example)
-def pred_func(model, images, targets):
-    outputs = model(images)
-    _, predicted = torch.max(outputs.data, 1)
-    return predicted
-
-# 4. Split the dataset by correctness
-correct_loader, incorrect_loader = extractor.split_by_correctness(loader, pred_func=pred_func)
-
-print(f"Correctly classified examples: {len(correct_loader.dataset)}")
-print(f"Incorrectly classified examples: {len(incorrect_loader.dataset)}")
+# 8. Analyze the generated UAP
+eval.full_analysis(pert_model)
 ```
 
 ### Exploring the Notebooks
