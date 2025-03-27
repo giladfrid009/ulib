@@ -114,7 +114,6 @@ This example demonstrates how to use the `GD_UAP` attack to generate a universal
 ```python
 import torch
 import torch.optim as optim
-from ulib import eval
 from ulib.pert_module import PertModule
 from ulib.attacks.gd_uap import GD_UAP
 from ulib.attack import StopCriteria
@@ -140,7 +139,7 @@ attack = GD_UAP(
 )
 
 # 5. Define stopping criteria
-stop = StopCriteria(max_epochs=10, max_time=600)
+stop = StopCriteria(max_epochs=10, max_time=60 * 10)
 
 # 6. Run the attack
 pert_tensor = attack.fit(dl_train, dl_eval, stop)
@@ -149,18 +148,77 @@ pert_tensor = attack.fit(dl_train, dl_eval, stop)
 attack.close()
 
 print("UAP Generated!")
+```
 
-# 8. Analyze the generated UAP
-eval.full_analysis(pert_model)
+### Advanced Attack Parameters (USGD)
+
+The following code snippet demonstrates some of the advanced features supported by `OptimAttack` and `UniversalAttack`.
+For a full review of all supported features check the documentation of these classes. 
+
+```python
+import torch
+import torch.optim as optim
+from ulib import eval
+from ulib.pert_module import PertModule
+from ulib.attacks.usgd import USGD
+from ulib.attack import StopCriteria
+from notebooks.experiment_robust import load_robust_experiment
+
+# 1. Load a model and data loaders
+model, dl_train, dl_eval = load_robust_experiment("Standard", "cifar10")
+
+# 2. Create a PertModule
+pert_model = PertModule(model, 
+    data_shape=next(iter(dl_train))[0].shape[1:], 
+    eps=16/255, 
+    norm=float("inf"), 
+    random_init=False,
+)
+
+# 3. Define an optimizer
+optimizer = optim.Adam(pert_model.parameters(), lr=1e-3)
+
+# 4. Choose loss function
+criterion = torch.nn.CrossEntropyLoss()
+
+# 5. (Optional) Choose LR scheduler
+scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=100, T_mult=1)
+
+# 6. (Optional) Create a grad-scaler, which activates torch autocast. 
+grad_scaler = torch.GradScaler(device=pert_model.device.type)
+
+# 7. Initialize the attack
+attack = USGD(
+    # attack-specific params
+    pert_model=pert_model,
+    optimizer=optimizer,
+    criterion=criterion,
+    skip_already_fooled=False,
+    # general params
+    scheduler=scheduler,
+    grad_scaler=grad_scaler,
+    sched_on_batch=True,
+    eval_freq=100,
+    targeted=True,
+    metric_func=eval.attack_success_ratio,
+    log_dir="logs",
+)
+
+# 8. Define stopping criteria
+stop = StopCriteria(max_epochs=10, max_time=60 * 10, patience=5, patience_delta=0.001)
+
+# 9. Run the attack
+pert_tensor = attack.fit(dl_train, dl_eval, stop)
+
+# 10. Close the attack
+attack.close()
+
+print("UAP Generated!")
 ```
 
 ### Exploring the Notebooks
 
 The notebooks directory contains several Jupyter notebooks that demonstrate how to use the library. These notebooks provide practical examples of how to generate UAPs using different attack methods and evaluate their effectiveness.  Refer to the list in the Repository Structure section for a description of each notebook.
-
-## Contributing
-
-Contributions are welcome! Please submit pull requests or open issues to suggest improvements, report bugs, or add new features.
 
 ## License
 
