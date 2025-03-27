@@ -8,32 +8,17 @@ ULib is a PyTorch-based library designed for generating universal adversarial pe
 -   **Flexible Perturbation Module:** The [`PertModule`](ulib/pert_module.py) wraps the target model, allowing for easy integration and control of adversarial perturbations.
 -   **Extensive Experiment Notebooks:** A collection of Jupyter notebooks demonstrating the usage of different attacks on various datasets and models.
 -   **Built-in Logging:** Integrated logging using the [`Logger`](ulib/logger.py) class for tracking metrics, hyperparameters, and generated adversarial examples.
--   **Stop Criteria:** Flexible stopping criteria for attacks, including maximum epochs and time limits.
+-   **Stop Criteria:** Flexible stopping criteria for attacks, including time limits and early stopping.
 -   **Data Extraction Tools:** Utilities for splitting and filtering datasets based on correctness, class label, or confidence.
-
-## Installation
-
-1.  Clone the repository:
-
-    ```sh
-    git clone https://github.com/<your_username>/ulib.git
-    cd ulib
-    ```
-
-2.  Install dependencies using `pip`:
-
-    ```sh
-    pip install -r requirements.yaml
-    ```
 
 ## Repository Structure
 
 ```
 .
-├── .gitignore        # Specifies intentionally untracked files that Git should ignore
-├── LICENSE           # Contains the license information (MIT License)
-├── README.md         # This file, providing an overview of the project
-├── requirements.yaml # Lists the project's dependencies
+├── .gitignore       
+├── LICENSE           
+├── README.md         
+├── requirements.yaml 
 ├── notebooks/                # Jupyter notebooks demonstrating library usage
 │   ├── datasets.py           # Utility functions for loading datasets
 │   ├── experiment_robust.py  # Functions for setting up robust training experiments
@@ -50,7 +35,7 @@ ULib is a PyTorch-based library designed for generating universal adversarial pe
     │   ├── dt_uap.py       # Implementation of the DT_UAP attack
     │   ├── fff.py          # Implementation of the FFF attack
     │   └── ...
-    ├── data/
+    ├── data/                   # Data-related classes
     │   ├── data_extractor.py   # Utility for splitting and filtering datasets
     │   └── subset_folder.py    # Utility for creating partial datasets from image folders
     ├── logger.py               # Defines the Logger class for experiment tracking
@@ -93,17 +78,6 @@ The [`UnivAttack`](ulib/attack.py) class (and its subclass [`OptimAttack`](ulib/
     *   `fit()`: The main method for generating the UAP. It iterates through the training dataset and updates the perturbation. 
     *   `close()`: Cleans up resources after the attack is finished.
     *   Handles logging and checkpointing.
-
-### [`DataExtractor`](ulib/data/data_extractor.py)
-
-The [`DataExtractor`](ulib/data/data_extractor.py) class provides utilities for manipulating datasets.
-
-*   **Initialization:** Takes a model as input.
-*   **Functionality:**
-    *   `split_by_correctness()`: Splits a dataset into correctly and incorrectly classified examples.
-    *   `extract_class()`: Extracts examples belonging to a specific class.
-    *   `stratified_split()`: Splits a dataset into two stratified subsets.
-    *   `extract_confidence()`: Extracts examples based on the model's confidence.
 
 ## Usage Examples
 
