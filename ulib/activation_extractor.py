@@ -17,7 +17,13 @@ class ActivationExtractor:
         activations = extractor.get_activations()
     """
 
-    def __init__(self, model: nn.Module, *layer_specs: str | type, exact_match: bool = True):
+    def __init__(
+        self,
+        model: nn.Module,
+        *layer_specs: str | type,
+        exact_match: bool = True,
+        capture_output: bool = True,
+    ):
         """
         Initialize the activation extractor.
 
@@ -25,6 +31,7 @@ class ActivationExtractor:
             model: PyTorch model to extract activations from
             layer_specs: Layer names or types to capture activations from
             exact_match: If True, requires exact layer name matches
+            capture_output: If True, captures the output of the layer. If False, captures the input.
         """
         if len(layer_specs) == 0:
             raise ValueError("At least one layer must be specified.")
@@ -32,6 +39,7 @@ class ActivationExtractor:
         self.model = model
         self.layer_specs = layer_specs
         self.exact_match = exact_match
+        self.capture_output = capture_output
 
         self._activations: dict[str, Tensor] = {}
         self._handles: list[torch.utils.hooks.RemovableHandle] = []
@@ -107,19 +115,34 @@ class ActivationExtractor:
 
         return layers
 
-    def _create_hook(self, layer_name: str):
-        """Create a forward hook to capture layer activations."""
+    def _create_output_hook(self, layer_name: str):
+        """Create a forward hook to capture layer output."""
 
         def hook_fn(module: nn.Module, inputs: tuple[Tensor, ...], output: Tensor):
             self._activations[layer_name] = output
 
         return hook_fn
 
+    def _create_input_hook(self, layer_name: str):
+        """Create a forward hook to capture layer input."""
+
+        def hook_fn(module: nn.Module, inputs: tuple[Tensor, ...]):
+            tensors = [item for item in inputs if isinstance(item, torch.Tensor)]
+            if not len(tensors) == 1:
+                raise ValueError(f"Expected 1 input tensor, got {len(tensors)}")
+            self._activations[layer_name] = tensors[0]
+
+        return hook_fn
+
     def _register_hooks(self) -> None:
         """Register forward hooks for the specified layers."""
         for layer_name, layer_module in self._layers:
-            hook_fn = self._create_hook(layer_name)
-            handle = layer_module.register_forward_hook(hook_fn)
+
+            if self.capture_output:
+                handle = layer_module.register_forward_hook(self._create_output_hook(layer_name))
+            else:
+                handle = layer_module.register_forward_pre_hook(self._create_input_hook(layer_name))
+
             self._handles.append(handle)
 
     def _remove_hooks(self) -> None:
