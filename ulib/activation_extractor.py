@@ -54,6 +54,7 @@ class ActivationExtractor:
         """Returns hyperparameters for the activation extractor."""
         return {
             "activ_extractor/exact_match": self.exact_match,
+            "activ_extractor/capture_output": self.capture_output,
             "activ_extractor/layer_specs": str(self.layer_specs),
             "activ_extractor/layer_names": str(self.layer_names),
         }
