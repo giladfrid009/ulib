@@ -1,89 +1,84 @@
 # Universal Adversarial Perturbations Library (ULib)
 
-ULib is a PyTorch-based library designed for generating universal adversarial perturbations (UAPs) to fool deep neural networks. It provides a modular and extensible framework for implementing and evaluating various UAP generation techniques. This README provides a comprehensive guide to using the library, its structure, and key components.
+ULib is a modular, PyTorch-based framework for generating universal adversarial perturbations (UAPs) that can fool deep neural networks. The library comes with a variety of attack implementations, tools for dataset manipulation, and detailed experiment logging—making it an ideal solution for both research and practical evaluation of adversarial attacks.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage Examples](#usage-examples)
+  - [Basic Attack Example (GD_UAP)](#basic-attack-example-gd_uap)
+  - [Advanced Attack Parameters (USGD)](#advanced-attack-parameters-usgd)
+- [Repository Structure](#repository-structure)
+- [API Reference](#api-reference)
+  - [Core Classes](#core-classes)
+    - [PertModule](#pertmodule)
+    - [UnivAttack & OptimAttack](#univattack--optimattack)
+    - [ActivationExtractor](#activationextractor)
+- [Contributing](#contributing)
+- [License](#license)
+- [Authors](#authors)
+
+---
 
 ## Features
 
--   **Modular Attack Implementations:** Includes implementations of various UAP generation methods, such as GD\_UAP, DF\_UAP, DT\_UAP, IMI\_UAP, IML\_SVRG\_UAP, FFF, UAPGD, FG\_UAP, SD\_UAP, Cosine UAP, AE\_UAP, D-BADGE and more.
--   **Flexible Perturbation Module:** The [`PertModule`](ulib/pert_module.py) wraps the target model, allowing for easy integration and control of adversarial perturbations.
--   **Extensive Experiment Notebooks:** A collection of Jupyter notebooks demonstrating the usage of different attacks on various datasets and models.
--   **Built-in Logging:** Integrated logging using the [`Logger`](ulib/logger.py) class for tracking metrics, hyperparameters, and generated adversarial examples.
--   **Stop Criteria:** Flexible stopping criteria for attacks, including time limits and early stopping.
--   **Data Extraction Tools:** Utilities for splitting and filtering datasets based on correctness, class label, or confidence.
+- **Modular Attack Implementations:**  
+  Implements various UAP generation methods such as GD-UAP, DF-UAP, DT-UAP, FFF, UAPGD, FG-UAP, SD-UAP, Cosine-UAP, AE-UAP, D-BADGE, and more.
 
-## Repository Structure
+- **Flexible Perturbation Module:**  
+  The [`PertModule`](ulib/pert_module.py) encapsulates a target model and manages adversarial perturbations seamlessly.
 
-```
-.
-├── .gitignore       
-├── LICENSE           
-├── README.md         
-├── requirements.yaml 
-├── notebooks/                # Jupyter notebooks demonstrating library usage
-│   ├── datasets.py           # Utility functions for loading datasets
-│   ├── experiment_robust.py  # Functions for setting up robust training experiments
-│   ├── experiment_torch.py   # Functions for setting up standard PyTorch experiments
-│   ├── experiment_utils.py   # Utility functions for experiments
-│   ├── test_df_uap.ipynb     # Notebook testing the DF_UAP attack
-│   ├── test_dt_uap.ipynb     # Notebook testing the DT_UAP attack
-│   ├── test_fff.ipynb        # Notebook testing the FFF attack
-│   └── ...
-└── ulib/                   # The core library package
-    ├── attack.py           # Defines base attack classes (UnivAttack, OptimAttack) and StopCriteria
-    ├── attacks/            # Implementations of various UAP methods
-    │   ├── df_uap.py       # Implementation of the DF_UAP attack
-    │   ├── dt_uap.py       # Implementation of the DT_UAP attack
-    │   ├── fff.py          # Implementation of the FFF attack
-    │   └── ...
-    ├── data/                   # Data-related classes
-    │   ├── data_extractor.py   # Utility for splitting and filtering datasets
-    │   └── subset_folder.py    # Utility for creating partial datasets from image folders
-    ├── logger.py               # Defines the Logger class for experiment tracking
-    ├── pert_module.py          # Defines the PertModule class for wrapping models and applying perturbations
-    ├── activation_extractor.py # Utility for extracting activations from model layers
-    ├── eval.py                 # Evaluation functions for analyzing perturbation performance
-    └── utils.py                # General utility functions used throught the API
+- **Extensive Experiment Notebooks:**  
+  A set of Jupyter notebooks demonstrates different attack strategies on various datasets and models.
+
+- **Built-in Logging:**  
+  Integrated logging via the [`Logger`](ulib/logger.py) class tracks metrics, hyperparameters, and generated adversarial examples throughout experiments.
+
+- **Customizable Stopping Criteria:**  
+  Flexible stopping conditions (e.g., time limits, epoch limits, early stopping) ensure controlled experiment runs.
+
+- **Data Extraction Tools:**  
+  Utilities for splitting datasets by correctness, class label, or confidence, and for creating partial datasets from image folders.
+
+---
+
+## Installation
+
+ULib requires PyTorch and several standard Python libraries. You can install the required dependencies using the provided [requirements.yaml](requirements.yaml) file. For example:
+
+```bash
+# Create and activate your virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+
+# Install dependencies (if using pip with a converted requirements file)
+pip install -r requirements.txt
 ```
 
-### Key Files and Directories:
+> **Note:** You may need to convert the `requirements.yaml` to a `requirements.txt` format or use a tool like `conda` if you prefer working with YAML environment files.
 
-*   **`ulib/`**: This directory contains the core library code.
-*   **`ulib/attack.py`**: Defines the base classes for all attacks, including [`UnivAttack`](ulib/attack.py) and [`OptimAttack`](ulib/attack.py). It also includes the [`StopCriteria`](ulib/attack.py) class for defining stopping conditions.
-*   **`ulib/attacks/`**: Contains implementations of various UAP attacks. Each file in this directory implements a specific attack algorithm.
-*   **`ulib/pert_module.py`**: Defines the [`PertModule`](ulib/pert_module.py) class, which is used to wrap the target model and manage the adversarial perturbation.
-*   **`ulib/logger.py`**: Defines the [`Logger`](ulib/logger.py) class, which is used for logging experiment metrics, hyperparameters, and generated adversarial examples.
-*   **`ulib/data/data_extractor.py`**: Defines the [`DataExtractor`](ulib/data/data_extractor.py) class, which provides utilities for splitting and filtering datasets based on various criteria.
-*   **`notebooks/`**: This directory contains Jupyter notebooks that demonstrate how to use the library. The notebooks cover various aspects of UAP generation, including loading datasets, training models, and evaluating attacks.
+---
 
-## Core Classes
+## Quick Start
 
-### [`PertModule`](ulib/pert_module.py)
+ULib is designed to be plug-and-play. Here’s how to generate a universal adversarial perturbation on a sample dataset:
 
-The [`PertModule`](ulib/pert_module.py) is a crucial component of the library. It wraps the original model and manages the perturbation.
+1. **Load a pretrained model and data loaders.**
+2. **Wrap the model with a `PertModule` to manage the perturbation.**
+3. **Initialize an attack (e.g., GD_UAP) with the desired hyperparameters.**
+4. **Run the attack with specified stopping criteria.**
 
-*   **Initialization:** Takes the original model and perturbation parameters (e.g., epsilon) as input.
-*   **Functionality:**
-    *   Adds a perturbation to the input during the forward pass.
-    *   Clips the perturbation to ensure it stays within the specified bounds.
-    *   Allows enabling/disabling the perturbation.
-    *   Provides methods for getting the perturbation (`get_pert`), initializing it randomly (`random_init`), and projecting it onto a valid space (`project`).
-    *   The `to_image` method converts the perturbation to a visualizable image.
+Refer to the [Usage Examples](#usage-examples) section for complete code snippets.
 
-### [`UnivAttack`](ulib/attack.py)
-
-The [`UnivAttack`](ulib/attack.py) class (and its subclass [`OptimAttack`](ulib/attack.py)) serves as the base class for all attack implementations.
-
-*   **Initialization:** Takes the [`PertModule`](ulib/pert_module.py), optimizer (for `OptimAttack`), and other attack-specific parameters as input. It accepts optional `log_dir` argument to log metrics during training.
-*   **Functionality:**
-    *   `fit()`: The main method for generating the UAP. It iterates through the training dataset and updates the perturbation. 
-    *   `close()`: Cleans up resources after the attack is finished.
-    *   Handles logging and checkpointing.
+---
 
 ## Usage Examples
 
-### Basic Attack Example (GD\_UAP)
-
-This example demonstrates how to use the `GD_UAP` attack to generate a universal adversarial perturbation.
+### Basic Attack Example (GD_UAP)
 
 ```python
 import torch
@@ -118,16 +113,13 @@ stop = StopCriteria(max_epochs=10, max_time=60 * 10)
 # 6. Run the attack
 pert_tensor = attack.fit(dl_train, dl_eval, stop)
 
-# 7. Close the attack
+# 7. Clean up
 attack.close()
 
 print("UAP Generated!")
 ```
 
 ### Advanced Attack Parameters (USGD)
-
-The following code snippet demonstrates some of the advanced features supported by `OptimAttack` and `UniversalAttack`.
-For a full review of all supported features check the documentation of these classes. 
 
 ```python
 import torch
@@ -141,8 +133,9 @@ from notebooks.experiment_robust import load_robust_experiment
 # 1. Load a model and data loaders
 model, dl_train, dl_eval = load_robust_experiment("Standard", "cifar10")
 
-# 2. Create a PertModule
-pert_model = PertModule(model, 
+# 2. Create a PertModule with advanced settings
+pert_model = PertModule(
+    model, 
     data_shape=next(iter(dl_train))[0].shape[1:], 
     eps=16/255, 
     norm=float("inf"), 
@@ -155,13 +148,13 @@ optimizer = optim.Adam(pert_model.parameters(), lr=1e-3)
 # 4. Choose loss function
 criterion = torch.nn.CrossEntropyLoss()
 
-# 5. (Optional) Choose LR scheduler
+# 5. (Optional) Chooe LR scheduler
 scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=100, T_mult=1)
 
-# 6. (Optional) Create a grad-scaler, which activates torch autocast. 
+# 6. (Optional) Use a grad-scaler for mixed precision
 grad_scaler = torch.GradScaler(device=pert_model.device.type)
 
-# 7. Initialize the attack
+# 7. Initialize the attack with extended settings
 attack = USGD(
     # attack-specific params
     pert_model=pert_model,
@@ -179,27 +172,107 @@ attack = USGD(
     log_dir="logs",
 )
 
-# 8. Define stopping criteria
+# 8. Define stopping criteria with patience
 stop = StopCriteria(max_epochs=10, max_time=60 * 10, patience=5, patience_delta=0.001)
 
 # 9. Run the attack
 pert_tensor = attack.fit(dl_train, dl_eval, stop)
 
-# 10. Close the attack
+# 10. Clean up
 attack.close()
 
 print("UAP Generated!")
 ```
 
-### Exploring the Notebooks
+---
 
-The notebooks directory contains several Jupyter notebooks that demonstrate how to use the library. These notebooks provide practical examples of how to generate UAPs using different attack methods and evaluate their effectiveness.  Refer to the list in the Repository Structure section for a description of each notebook.
+## Repository Structure
+
+```plaintext
+.
+├── .gitignore
+├── LICENSE
+├── README.md
+├── requirements.yaml         # Environment/dependency configuration
+├── notebooks/                # Jupyter notebooks demonstrating library usage
+│   ├── datasets.py           # Utility functions for loading datasets
+│   ├── experiment_robust.py  # Robust training experiment setup
+│   ├── experiment_torch.py   # Standard PyTorch experiments
+│   ├── experiment_utils.py   # Experiment utility functions
+│   ├── test_df_uap.ipynb     # DF_UAP attack demonstration
+│   ├── test_dt_uap.ipynb     # DT_UAP attack demonstration
+│   ├── test_fff.ipynb        # FFF attack demonstration
+│   └── ...
+└── ulib/                     # Core library package
+    ├── attack.py             # Base attack classes and StopCriteria
+    ├── attacks/              # Implementations of UAP methods (e.g., df_uap.py, dt_uap.py, fff.py)
+    ├── data/                 
+    │   ├── data_extractor.py # Tools for splitting/filtering datasets
+    │   └── tensor_loader.py  # Efficient tensor batch loader
+    ├── logger.py             # Experiment logging utilities
+    ├── pert_module.py        # PertModule for model perturbations
+    ├── activation_extractor.py # Extract activations from model layers
+    ├── eval.py               # Evaluation and analysis functions
+    └── utils.py              # General utility functions
+```
+
+---
+
+## API Reference
+
+### Core Classes
+
+#### PertModule
+
+The [`PertModule`](ulib/pert_module.py) is responsible for applying and managing adversarial perturbations on inputs before they are passed to a pretrained model. Key features include:
+
+- **Initialization:** Accepts the target model, input shape, epsilon (perturbation bound), norm constraint, and other parameters.
+- **Perturbation Management:** Methods such as `random_init()`, `project()`, `get_pert()`, and `set_pert()` ensure that the perturbation remains within valid bounds.
+- **Visualization:** The `to_image()` method converts the perturbation into a normalized image for easy visualization.
+
+#### UnivAttack & OptimAttack
+
+The [`UnivAttack`](ulib/attack.py) serves as the base class for all adversarial attacks. It handles:
+
+- **Attack Lifecycle:**  
+  Methods for training (`fit()`), evaluation (`evaluate()`), and checkpointing.
+- **Logging & Metrics:**  
+  Integration with the [`Logger`](ulib/logger.py) to track metrics and hyperparameters.
+
+The subclass [`OptimAttack`](ulib/attack.py) extends this functionality by incorporating an optimizer, learning rate scheduler, and (optionally) mixed precision tools such as `grad_scaler` and `autocast` for efficient training.
+
+#### ActivationExtractor
+
+Located in [`ulib/activation_extractor.py`](ulib/activation_extractor.py), the `ActivationExtractor` allows you to capture intermediate activations from specified layers. This can be useful for analyzing model behavior or designing custom loss functions that depend on internal representations.
+
+For a detailed review of all parameters and usage examples, please refer to the inline documentation in the source code.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. **Fork the Repository:** Create a personal fork and work on your feature branch.
+2. **Coding Style:** Follow PEP 8 and ensure your code is well documented.
+3. **Testing:** Add tests for new features or bug fixes.
+4. **Pull Request:** Submit a pull request with a clear description of your changes.
+
+For more details, see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## Authors
 
-*   Gilad Freidkin
-*   Guy Cohen
+- **Gilad Freidkin**
+- **Guy Cohen**
+
+---
+
+Feel free to explore the repository and the provided notebooks to learn more about generating and evaluating universal adversarial perturbations with ULib!
