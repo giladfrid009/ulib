@@ -39,7 +39,8 @@ def get_info(model_name: str, dataset: str = "imagenet", norm: str = "Linf") -> 
         print(f"Error loading model info: {e}")
         return ModelInfo()
 
-
+# TODO: FIX, VERY IMPORTANT
+# FOR SOME REASON THE TRAIN AND EVAL ACCURACY ARE ALWAYS VERY DIFFERENT
 def load_robust_experiment(
     model_type: str,
     dataset: str,

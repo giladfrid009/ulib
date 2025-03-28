@@ -107,6 +107,8 @@ class TensorLoader:
         tensor_lists = []
         dl = DataLoader(ds, batch_size=loader_batch_size, num_workers=loader_workers, shuffle=False)
 
+        # NOTE: tqdm shouldnt directly wrap the DataLoader since it throws 
+        # weird exceptions when using tqdm.auto and num_workers > 0
         with tqdm(desc="Extracting Samples", leave=False, total=len(dl)) as pbar:
             for batch in dl:
                 if not tensor_lists:

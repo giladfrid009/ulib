@@ -9,6 +9,8 @@ from ulib import utils, eval
 from ulib.data import TensorLoader
 
 
+# TODO: FIX, VERY IMPORTANT
+# FOR SOME REASON THE TRAIN AND EVAL ACCURACY ARE ALWAYS VERY DIFFERENT
 def load_torchvision_experiment(
     model_type: str,
     batch_size: int = 256,
