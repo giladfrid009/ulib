@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 import random
 import torch
 from torch.utils.data import Dataset, Subset, DataLoader
@@ -49,21 +50,29 @@ class TensorLoader:
         if tensor_names is not None and len(tensor_names) != len(tensors):
             raise ValueError("Number of tensor names must match number of tensors")
 
-        if drop_last:
-            total = length - length % batch_size
-            tensors = tuple(t[:total] for t in tensors)
-
         self.tensors = tensors
+        "Tuple of tensors which hold the data."
+        
         self.batch_size = batch_size
+        "Size of batches to yield when iterating."
+        
         self.shuffle = shuffle
+        "Whether to shuffle data when iterating."
+        
         self.drop_last = drop_last
+        "Whether to drop the last incomplete batch."
+        
         self.transforms = transforms
+        "Tuple of functions/transforms for each tensor. None means no transform."
+        
         self.tensor_names = tensor_names or tuple(f"tensor_{i}" for i in range(len(tensors)))
+        "Names for each tensor for better readability or named access."
 
     @property
     def total(self) -> int:
         """Total number of samples."""
-        return len(self.tensors[0])
+        size = len(self.tensors[0])
+        return size - size % self.batch_size if self.drop_last else size
 
     @property
     def num_tensors(self) -> int:
@@ -77,7 +86,7 @@ class TensorLoader:
                 index = self.tensor_names.index(index)
             except ValueError:
                 raise ValueError(f"Tensor name '{index}' not found")
-        return self.tensors[index]
+        return self.tensors[index][:self.total]
 
     @classmethod
     def from_dataset(
@@ -126,7 +135,7 @@ class TensorLoader:
 
     def __len__(self) -> int:
         """Number of batches."""
-        return self.total // self.batch_size + int(not self.drop_last and self.total % self.batch_size != 0)
+        return math.ceil(self.total / self.batch_size)
 
     def __iter__(self) -> Iterator[tuple[torch.Tensor, ...]]:
         """Iterate over batches."""
