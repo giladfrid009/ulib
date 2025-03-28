@@ -65,11 +65,41 @@ pip install -r requirements.txt
 
 ## Quick Start
 
+Here is a simple code snippet demonstraing running a UAP attack. The attack here is Cosine-UAP, but for other attacks the procedure is similar. 
+
+```python
+import torch
+from ulib.pert_module import PertModule
+from ulib.attacks.cosine_uap import Cosine_UAP
+from ulib.attack import StopCriteria
+from notebooks.experiment_robust import load_robust_experiment
+
+# Load model and data loaders
+model, dl_train, dl_eval = load_robust_experiment("Standard", "cifar10")
+
+# Wrap the model with PertModule (epsilon = 8/255, L-infinity norm)
+pert_model = PertModule(model, data_shape=(3, 32, 32), eps=8/255)
+
+# Set up optimizer
+optimizer = torch.optim.Adam(pert_model.parameters(), lr=1e-3)
+
+# Initialize the attack
+attack = Cosine_UAP(pert_model=pert_model, optimizer=optimizer)
+
+# Define stopping criteria (max 10 epochs or 10 minutes)
+stop = StopCriteria(max_epochs=10, max_time=600)
+
+# Generate the UAP
+pert_tensor = attack.fit(dl_train, dl_eval, stop)
+
+print("UAP Generated!")
+```
+
 ULib is designed to be plug-and-play. Here’s how to generate a universal adversarial perturbation on a sample dataset:
 
 1. **Load a pretrained model and data loaders.**
 2. **Wrap the model with a `PertModule` to manage the perturbation.**
-3. **Initialize an attack (e.g., GD_UAP) with the desired hyperparameters.**
+3. **Initialize an attack with the desired hyperparameters.**
 4. **Run the attack with specified stopping criteria.**
 
 Refer to the [Usage Examples](#usage-examples) section for complete code snippets.
@@ -255,10 +285,8 @@ Contributions are welcome! Please follow these guidelines:
 
 1. **Fork the Repository:** Create a personal fork and work on your feature branch.
 2. **Coding Style:** Follow PEP 8 and ensure your code is well documented.
-3. **Testing:** Add tests for new features or bug fixes.
+3. **Testing:** We would love if you include tests for new features or bug fixes.
 4. **Pull Request:** Submit a pull request with a clear description of your changes.
-
-For more details, see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
