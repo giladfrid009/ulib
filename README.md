@@ -170,10 +170,11 @@ attack = USGD(
     skip_already_fooled=False,
     # general params
     scheduler=scheduler,
-    grad_scaler=grad_scaler,
     sched_on_batch=True,
+    grad_scaler=grad_scaler,
     eval_freq=100,
-    targeted=True,
+    eval_on_batch=True,
+    targeted=False,
     metric_func=eval.attack_success_ratio,
     log_dir="logs",
 )

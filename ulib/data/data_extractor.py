@@ -1,7 +1,3 @@
-# inspired by https://arxiv.org/pdf/1901.04684
-# to extract low-confidence samples from a dataset
-# and construct a pertubations for them only
-
 import torch
 from torch import nn
 from tqdm.auto import tqdm
@@ -12,166 +8,217 @@ from ulib.data.tensor_loader import TensorLoader
 
 class DataExtractor:
     """
-    Module to split a dataset by correctness, class label, or confidence, using a PyTorch model.
-    Provides functionalities to filter or sample datasets for adversarial training or evaluation.
+    Module to split a dataset by correctness, class label, or confidence using a PyTorch model.
+    Assumes input tensors are first, and the target tensor is always last in the tuple.
     """
 
-    def __init__(
-        self,
-        model: nn.Module,
-    ) -> None:
+    def __init__(self, model: nn.Module) -> None:
+        """
+        Initialize the DataExtractor.
 
+        Args:
+            model (nn.Module): PyTorch model for predictions.
+        """
         self.model = model.eval()
         self.device = utils.extract_device(model)
+
+    def _validate_loader(self, loader: TensorLoader) -> None:
+        """Validate that loader has at least two tensors (inputs + target)."""
+        if loader.num_tensors < 2:
+            raise ValueError("Loader must contain at least one input tensor and one target tensor")
 
     def split_by_correctness(
         self,
         loader: TensorLoader,
-        pred_func: Callable[[nn.Module, torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+        pred_func: Callable[[nn.Module, tuple[torch.Tensor, ...]], torch.Tensor] | None = None,
     ) -> tuple[TensorLoader, TensorLoader]:
         """
-        Split a dataset into correct and incorrectly predicted samples.
+        Split dataset into correct and incorrect predictions.
 
         Args:
-            loader (TensorLoader): Dataset loader to split.
-            pred_func (Callable[[nn.Module, torch.Tensor, torch.Tensor], torch.Tensor], optional): Prediction function to use.
-                Defaults to lambda model, x, y: model(x).argmax(dim=1).
+            loader (TensorLoader): Dataset loader to split. Target tensor must be last.
+            pred_func (Callable[[nn.Module, tuple[torch.Tensor, ...]], torch.Tensor], optional):
+                Custom prediction function taking model and all input tensors.
+                Defaults to model(*inputs).argmax(dim=1) with all input tensors unpacked.
 
         Returns:
-            tuple[TensorLoader, TensorLoader]: (correct_x, correct_y), (incorrect_x, incorrect_y)
+            tuple[TensorLoader, TensorLoader]: (correct_loader, incorrect_loader)
         """
-        cor_x = []
-        cor_y = []
-        inc_x = []
-        inc_y = []
+        self._validate_loader(loader)
 
-        if pred_func is None:
-            pred_func = lambda model, x, y: model(x).argmax(dim=1)
+        # Initialize empty lists for each tensor
+        cor_tensors = []
+        inc_tensors = []
+        for _ in range(loader.num_tensors):
+            cor_tensors.append([])
+            inc_tensors.append([])
 
-        for x_batch, y_batch in tqdm(loader, desc="Extracting"):
-            x_batch, y_batch = x_batch.to(self.device), y_batch.to(self.device)
-            preds = pred_func(self.model, x_batch, y_batch)
+        # Default pred_func unpacks all input tensors (all except the last)
+        pred_func = pred_func or (lambda model, inputs: model(*inputs).argmax(dim=1))
 
-            mask = (preds == y_batch).cpu()
-            x_batch, y_batch = x_batch.cpu(), y_batch.cpu()
+        for batch in tqdm(loader, desc="Extracting by correctness"):
+            # Prepare inputs and targets
+            inputs = tuple(t.to(self.device) for t in batch[:-1])  # All except last
+            targets = batch[-1].to(self.device)  # Last tensor is target
+            preds = pred_func(self.model, inputs)
 
-            cor_x.append(x_batch[mask])
-            cor_y.append(y_batch[mask])
-            inc_x.append(x_batch[~mask])
-            inc_y.append(y_batch[~mask])
+            mask = (preds == targets).cpu()
+            batch = tuple(t.cpu() for t in batch)  # Move all tensors to CPU
 
-        if len(cor_x) == 0:
-            cor_x = torch.zeros((0, *loader.data.shape[1:]))
-            cor_y = torch.zeros((0,), device=self.device)
-        else:
-            cor_x = torch.stack(cor_x, dim=0)
-            cor_y = torch.stack(cor_y, dim=0)
+            # Append to correct and incorrect lists
+            for i in range(len(batch)):
+                tensor = batch[i]
+                cor_tensors[i].append(tensor[mask])
+                inc_tensors[i].append(tensor[~mask])
 
-        if len(inc_x) == 0:
-            inc_x = torch.zeros((0, *loader.data.shape[1:]))
-            inc_y = torch.zeros((0,), device=self.device)
-        else:
-            inc_x = torch.stack(inc_x, dim=0)
-            inc_y = torch.stack(inc_y, dim=0)
+        # handle case of empty lists (no correct or incorrect samples)
+        for i, tlist in enumerate(cor_tensors):
+            if len(tlist) == 0:
+                tlist.append(torch.zeros((0, *loader.get_tensor(i).shape[1:])))
 
-        dl_cor = TensorLoader(cor_x, cor_y, batch_size=loader.batch_size, shuffle=loader.shuffle, drop_last=loader.drop_last)
-        dl_inc = TensorLoader(inc_x, inc_y, batch_size=loader.batch_size, shuffle=loader.shuffle, drop_last=loader.drop_last)
+        for i, tlist in enumerate(inc_tensors):
+            if len(tlist) == 0:
+                tlist.append(torch.zeros((0, *loader.get_tensor(i).shape[1:])))
 
-        return dl_cor, dl_inc
+        cor_tensors = [torch.cat(tlist, dim=0) for tlist in cor_tensors]
+        inc_tensors = [torch.cat(tlist, dim=0) for tlist in inc_tensors]
+
+        return (
+            TensorLoader(
+                tuple(cor_tensors),
+                batch_size=loader.batch_size,
+                shuffle=loader.shuffle,
+                drop_last=loader.drop_last,
+                tensor_names=loader.tensor_names,
+            ),
+            TensorLoader(
+                tuple(inc_tensors),
+                batch_size=loader.batch_size,
+                shuffle=loader.shuffle,
+                drop_last=loader.drop_last,
+                tensor_names=loader.tensor_names,
+            ),
+        )
 
     @torch.inference_mode()
-    def extract_class(self, loader: TensorLoader, class_num: int | list[int]) -> TensorLoader:
+    def extract_class(
+        self,
+        loader: TensorLoader,
+        class_num: int | list[int],
+    ) -> TensorLoader:
         """
-        Extract samples of a specific class(es) from a dataset.
+        Extract samples of specific class(es).
 
         Args:
-            loader (TensorLoader): Dataset loader to extract from
-            class_num (int | list[int]): Class number(s) to extract
+            loader (TensorLoader): Dataset loader to extract from. Target tensor must be last.
+            class_num (int | list[int]): Class number(s) to extract.
 
         Returns:
-            TensorLoader: Extracted dataset loader
+            TensorLoader: Extracted dataset loader.
         """
-        class_nums = torch.tensor(class_num, dtype=loader.targets.dtype)
+        self._validate_loader(loader)
 
-        idx = torch.isin(loader.targets, class_nums)
-        extr_x = loader.data[idx]
-        extr_y = loader.targets[idx]
+        class_nums = torch.tensor(class_num, dtype=loader.get_tensor(-1).dtype)
+        idx = torch.isin(loader.get_tensor(-1), class_nums)
 
-        if len(extr_x) == 0:
+        # Extract tensors using explicit loop
+        extracted_tensors = []
+        for t in loader.tensors:
+            extracted_tensors.append(t[idx])
+
+        if not extracted_tensors[0].size(0):
             raise ValueError("No samples found for the specified class.")
 
-        return TensorLoader(extr_x, extr_y, batch_size=loader.batch_size, shuffle=loader.shuffle, drop_last=loader.drop_last)
+        return TensorLoader(
+            tuple(extracted_tensors),
+            batch_size=loader.batch_size,
+            shuffle=loader.shuffle,
+            drop_last=loader.drop_last,
+            tensor_names=loader.tensor_names,
+        )
 
-    def stratified_split(self, loader: TensorLoader, proportion: float, seed: int = 0) -> tuple[TensorLoader, TensorLoader]:
+    def stratified_split(
+        self,
+        loader: TensorLoader,
+        proportion: float,
+        seed: int = 0,
+    ) -> tuple[TensorLoader, TensorLoader]:
         """
-        Split a dataset into two parts while maintaining the class distribution.
+        Split dataset into two parts maintaining class distribution.
 
         Args:
-            loader (TensorLoader): Dataset loader to split.
-            proportion (float): Proportion of the first split.
+            loader (TensorLoader): Dataset loader to split. Target tensor must be last.
+            proportion (float): Proportion for the first split.
             seed (int): Random seed for reproducibility.
 
         Returns:
             tuple[TensorLoader, TensorLoader]: (split1, split2)
         """
-
+        self._validate_loader(loader)
         if not (0.0 < proportion < 1.0):
             raise ValueError("proportion must be between 0 and 1")
 
-        data = loader.data.clone()
-        targets = loader.targets.clone()
+        # Clone tensors
+        tensors = []
+        for t in loader.tensors:
+            tensors.append(t.clone())
+        targets = tensors[-1]  # Last tensor is target
 
-        # Shuffle the dataset
-        rng = torch.Generator()
-        rng.manual_seed(seed)
+        # Shuffle
+        rng = torch.Generator().manual_seed(seed)
         perm = torch.randperm(len(targets), generator=rng)
-        data = data[perm]
-        targets = targets[perm]
+        for i in range(len(tensors)):
+            tensors[i] = tensors[i][perm]
 
-        # Count the number of samples in each class
-        classes, total_class_counts = targets.unique(return_counts=True, sorted=False)
-        classes: torch.Tensor
-        total_class_counts: torch.Tensor
-
-        # Compute the number of samples to place in the first split
-        class_counts_float = proportion * total_class_counts.float()
-        class_counts = class_counts_float.floor().long()
-        remainders = class_counts_float - class_counts
-
-        # Distribute leftover elements to classes with largest fractional remainder
+        # Class distribution
+        classes, counts = targets.unique(return_counts=True, sorted=False)
+        class_counts = (proportion * counts.float()).floor().long()
+        remainders = proportion * counts.float() - class_counts
         split_size = int(proportion * loader.total)
         num_leftover = split_size - class_counts.sum().item()
-            
+
         if num_leftover > 0:
             _, idx_sorted = remainders.sort(descending=True)
-            idx_top = idx_sorted[:num_leftover]
-            class_counts[idx_top] += 1
+            for idx in idx_sorted[:num_leftover]:
+                class_counts[idx] += 1
 
-        # Split the dataset
-        split_data = []
-        split_targets = []
-        other_data = []
-        other_targets = []
+        # Split tensors
+        split_tensors = []
+        other_tensors = []
+        for _ in range(loader.num_tensors):
+            split_tensors.append([])
+            other_tensors.append([])
 
-        for c in tqdm(classes, desc="Splitting"):
+        for c, count in zip(classes, class_counts):
             idx = targets == c
-            idx_split = idx[: class_counts[c]]
-            idx_other = idx[class_counts[c] :]
+            for i in range(len(tensors)):
+                t = tensors[i]
+                split_tensors[i].append(t[idx][:count])
+                other_tensors[i].append(t[idx][count:])
 
-            split_data.append(data[idx_split])
-            split_targets.append(targets[idx_split])
-            other_data.append(data[idx_other])
-            other_targets.append(targets[idx_other])
+        # Concatenate split tensors
+        final_split_tensors = []
+        final_other_tensors = []
+        for i in range(len(split_tensors)):
+            final_split_tensors.append(torch.cat(split_tensors[i], dim=0))
+            final_other_tensors.append(torch.cat(other_tensors[i], dim=0))
 
-        split_data = torch.cat(split_data, dim=0)
-        split_targets = torch.cat(split_targets, dim=0)
-        other_data = torch.cat(other_data, dim=0)
-        other_targets = torch.cat(other_targets, dim=0)
-
-        dl1 = TensorLoader(split_data, split_targets, batch_size=loader.batch_size, shuffle=loader.shuffle, drop_last=loader.drop_last)
-        dl2 = TensorLoader(other_data, other_targets, batch_size=loader.batch_size, shuffle=loader.shuffle, drop_last=loader.drop_last)
-
-        return dl1, dl2
+        return (
+            TensorLoader(
+                tuple(final_split_tensors),
+                batch_size=loader.batch_size,
+                shuffle=loader.shuffle,
+                drop_last=loader.drop_last,
+                tensor_names=loader.tensor_names,
+            ),
+            TensorLoader(
+                tuple(final_other_tensors),
+                batch_size=loader.batch_size,
+                shuffle=loader.shuffle,
+                drop_last=loader.drop_last,
+                tensor_names=loader.tensor_names,
+            ),
+        )
 
     @torch.inference_mode()
     def extract_confidence(
@@ -181,60 +228,70 @@ class DataExtractor:
         correct_only: bool = True,
     ) -> TensorLoader:
         """
-        Extract low-confidence samples from a dataset.
+        Extract low-confidence samples.
 
         Extraction strategy:
           - Compute the model's confidence of the ground-truth class (GT)
           - Compute the highest confidence for any class other than the GT
-          - If (GT confidence - other confidence) <= threshold,
-             consider the sample low-confidence
+          - If (GT confidence - other confidence) <= threshold, consider the sample low-confidence
 
         Args:
-            loader (TensorLoader): Dataset loader to extract from.
-            threshold (float, optional): Confidence threshold.
-            correct_only (bool, optional): Extract only correct predictions.
+            loader (TensorLoader): Dataset loader to extract from. Target tensor must be last.
+            threshold (float): Confidence threshold.
+            correct_only (bool): Extract only correct predictions.
 
         Returns:
-            TensorLoader: Extracted dataset loader
+            TensorLoader: Extracted dataset loader.
         """
-        extr_x = []
-        extr_y = []
+        self._validate_loader(loader)
 
-        for x_batch, y_batch in tqdm(loader, desc="Extracting"):
-            # Move data to device
-            x_batch, y_batch = x_batch.to(self.device), y_batch.to(self.device)
-            logits = self.model(x_batch)
+        # Initialize empty lists for each tensor
+        extracted_tensors = []
+        for _ in range(loader.num_tensors):
+            extracted_tensors.append([])
+
+        for batch in tqdm(loader, desc="Extracting by confidence"):
+            # Prepare inputs and targets
+            inputs = []
+            for t in batch[:-1]:
+                inputs.append(t.to(self.device))  # All except last
+            targets = batch[-1].to(self.device)  # Last tensor is target
+            logits = self.model(*inputs)  # Unpack all input tensors
             probs = torch.softmax(logits, dim=1)
             preds = probs.argmax(dim=1)
 
-            # Only use correct predictions
             if correct_only:
-                cor_mask = preds == y_batch
+                cor_mask = preds == targets
                 if not cor_mask.any():
                     continue
-
-                x_batch, y_batch = x_batch[cor_mask], y_batch[cor_mask]
+                new_batch = []
+                for t in batch:
+                    new_batch.append(t[cor_mask])
+                batch = new_batch
                 probs = probs[cor_mask]
+                targets = targets[cor_mask]
 
-            # Compute the confidence of the ground-truth class
-            idx = torch.arange(len(y_batch), device=self.device)
-            gt_conf = probs[idx, y_batch].clone()
-
-            # Temporarily set GT confidence to -1 to find the highest non-GT confidence
-            probs[idx, y_batch] = -1
+            gt_conf = probs[torch.arange(len(targets)), targets].clone()
+            probs[torch.arange(len(targets)), targets] = -1
             other_conf = probs.max(dim=1).values
+            mask = (gt_conf - other_conf <= threshold).cpu()
 
-            # Low confidence mask
-            mask = gt_conf - other_conf <= threshold
+            for i in range(len(batch)):
+                t = batch[i]
+                extracted_tensors[i].append(t[mask].cpu())
 
-            extr_x.append(x_batch[mask].cpu())
-            extr_y.append(y_batch[mask].cpu())
-
-        if len(extr_x) == 0:
+        if not extracted_tensors[0]:
             raise ValueError("No low-confidence samples found.")
 
-        # Convert lists to tensors
-        extr_x = torch.stack(extr_x, dim=0)
-        extr_y = torch.stack(extr_y, dim=0)
+        # Concatenate extracted tensors
+        final_extracted_tensors = []
+        for t_list in extracted_tensors:
+            final_extracted_tensors.append(torch.cat(t_list, dim=0))
 
-        return TensorLoader(extr_x, extr_y, batch_size=loader.batch_size, shuffle=loader.shuffle, drop_last=loader.drop_last)
+        return TensorLoader(
+            tuple(final_extracted_tensors),
+            batch_size=loader.batch_size,
+            shuffle=loader.shuffle,
+            drop_last=loader.drop_last,
+            tensor_names=loader.tensor_names,
+        )

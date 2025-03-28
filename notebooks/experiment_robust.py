@@ -79,11 +79,13 @@ def load_robust_experiment(
         raise ValueError(f"Unknown dataset: {dataset}")
 
     if not silent:
-        clean_acc = eval.accuracy(model, dl_eval, silent=False)
+        clean_train_acc = eval.accuracy(model, dl_train, silent=False)
+        clean_eval_acc = eval.accuracy(model, dl_eval, silent=False)
         model_info = get_info(model_type, dataset, norm)
-        print(f"Model        : {model.__class__.__name__}")
+        print(f"Model        :  {model.__class__.__name__}")
         print(f"Device       : {device}")
-        print(f"Clean Acc    : {round(clean_acc * 100, 2)}")
+        print(f"Eval Acc     : {round(clean_eval_acc * 100, 2)}")
+        print(f"Train Acc    : {round(clean_train_acc * 100, 2)}")
         print(f"RB Name      : {model_info.name}")
         print(f"RB Arch      : {model_info.architecture}")
         print(f"RB Clean Acc : {model_info.clean_acc} ")
