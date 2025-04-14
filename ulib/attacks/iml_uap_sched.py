@@ -22,28 +22,32 @@ class IML_UAP_SCHED(OptimAttack):
             pert_model=pert_model,
             optimizer=optimizer,
             criterion=criterion,
-            targeted=False,
             **kwargs,
         )
 
         self.extractor = activ_extractor
         self.attack_builder_func = attack_builder_func
-        self.inner_attack = attack_builder_func(self.orig_model, 0)
+        self.inner_attack = self.make_attack(0)
         self.skip_already_fooled = skip_already_fooled
-        self.skip_failed_attacks = skip_failed_attacks    
-        
+        self.skip_failed_attacks = skip_failed_attacks
+
         self.logger.register_hparams(activ_extractor.get_hparams())
         self.logger.register_hparams({"inner_attack/name": self.inner_attack.__class__.__name__})
         self.logger.register_hparams({"attack/skip_already_fooled": skip_already_fooled})
         self.logger.register_hparams({"attack/skip_failed_attacks": skip_failed_attacks})
-        
+
+    def make_attack(self, epoch_num: int) -> torchattacks.attack.Attack:
+        inner_attack = self.attack_builder_func(self.orig_model, epoch_num)
+        if self.targeted:
+            inner_attack.set_mode_targeted_by_label(quiet=True)
+        return inner_attack
+
     def on_epoch_start(self, dl_train: Iterable[tuple[torch.Tensor, ...]], epoch_num: int):
-        if epoch_num > 0:
-            self.inner_attack = self.attack_builder_func(self.orig_model, epoch_num)
+        self.inner_attack = self.make_attack(epoch_num)
 
     def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor | None:
         x_batch, y_batch = data
-        
+
         with self.extractor.capture():
             # record forward pass activations
             y_pred = self.pert_model(x_batch).argmax(dim=1)

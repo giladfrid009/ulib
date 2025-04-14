@@ -29,7 +29,6 @@ class L1Diff(ActivationLoss):
         )
 
 
-# TODO: SHOULD ALSO IMPLEMENT A TARGETED VARIANT LATER
 class IML_UAP(OptimAttack):
     def __init__(
         self,
@@ -46,15 +45,17 @@ class IML_UAP(OptimAttack):
             pert_model=pert_model,
             optimizer=optimizer,
             criterion=criterion,
-            targeted=False,
             **kwargs,
         )
 
         self.inner_attack = inner_attack
         self.extractor = activ_extractor
         self.skip_already_fooled = skip_already_fooled
-        self.skip_failed_attacks = skip_failed_attacks    
-        
+        self.skip_failed_attacks = skip_failed_attacks
+
+        if self.targeted:
+            self.inner_attack.set_mode_targeted_by_label(quiet=True)
+
         self.logger.register_hparams(activ_extractor.get_hparams())
         self.logger.register_hparams({f"inner_attack/{k}": v for k, v in inner_attack.__dict__.items()})
         self.logger.register_hparams({"inner_attack/name": inner_attack.__class__.__name__})
@@ -63,7 +64,7 @@ class IML_UAP(OptimAttack):
 
     def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor | None:
         x_batch, y_batch = data
-        
+
         with self.extractor.capture():
             # record forward pass activations
             y_pred = self.pert_model(x_batch).argmax(dim=1)

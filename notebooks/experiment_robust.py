@@ -39,8 +39,7 @@ def get_info(model_name: str, dataset: str = "imagenet", norm: str = "Linf") -> 
         print(f"Error loading model info: {e}")
         return ModelInfo()
 
-# TODO: FIX, VERY IMPORTANT
-# FOR SOME REASON THE TRAIN AND EVAL ACCURACY ARE ALWAYS VERY DIFFERENT
+
 def load_robust_experiment(
     model_type: str,
     dataset: str,
@@ -62,7 +61,7 @@ def load_robust_experiment(
     model = robust_load_model(model_type, dataset=ds_enum, threat_model=norm_emum)
     model = model.eval().to(device)
     patch_class_name(model, model_type)
-    
+
     data_trans = robust_get_preprocessing(
         model_name=model_type,
         dataset=ds_enum,
