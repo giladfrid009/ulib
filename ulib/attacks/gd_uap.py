@@ -8,6 +8,16 @@ class GD_UAP(OptimAttack):
     """
     Reference:
         Presented in "Generalizable Data-free Objective for Crafting Universal Adversarial Perturbations": https://arxiv.org/pdf/1801.08092
+        
+    Args:
+        data_dependant (bool): If True, the perturbation is computed using the input data.
+            If False, the perturbation is computed using a random sample from input mean and std.
+        sat_thresh (float): Threshold for the saturation rate.
+            If the saturation rate is above this threshold, and changed less than `sat_delta` since the last batch,
+            the perturbation is divided by 2.
+        sat_delta (float): Minimum change in saturation rate since the last batch.
+            If the saturation rate is above `sat_thresh` and changed less than this value,
+            the perturbation is divided by 2.
     """
     def __init__(
         self,

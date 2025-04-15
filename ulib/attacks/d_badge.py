@@ -20,6 +20,11 @@ class D_BADGE(OptimAttack):
     Reference:
         Presented in "D-BADGE: Decision-Based Adversarial Batch Attack With Directional Gradient Estimation": https://ieeexplore.ieee.org/document/10542123
         Code inspired from original peper repo: https://github.com/AIRLABkhu/D-BADGE
+
+    Args:
+        delta (float): L-inf radius of the random noise at which the gradient is estimated.
+        delta_decay (float): Factor by which to decay delta each epoch.
+        gamma (float): Scaling factor for the gradient.
     """
 
     def __init__(
@@ -28,7 +33,7 @@ class D_BADGE(OptimAttack):
         optimizer: torch.optim.Optimizer,
         delta: float = 0.01,
         delta_decay: float = 0.9,
-        gamma: float = 0.001,
+        gamma: float = 1000,
         **kwargs,
     ):
         if delta <= 0:
@@ -93,7 +98,7 @@ class D_BADGE(OptimAttack):
             loss = self.grad_scaler.scale(loss)
 
         # Compute gradient
-        grad = loss / (self.gamma * vec)
+        grad = self.gamma * loss / vec
         pert.grad = grad
 
         # Update model

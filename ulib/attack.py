@@ -133,10 +133,9 @@ class UnivAttack(ABC):
 
         Args:
             pert_model (PertModule): A perturbation model used to generate adversarial examples.
-            targeted (bool): Flag indicating if the attack is targeted.
-                If the attack doesn't support targeted mode, this flag is ignored.
-            eval_freq (int): Frequency (in epochs) to evaluate model performance.
-            eval_on_batch (bool): If True, evaluates on every batch instead of every epoch.
+            targeted (bool): Flag indicating if the attack is targeted or not.
+            eval_freq (int): Every how many steps to evaluate the model performance.
+            eval_on_batch (bool): If true, each batch is counted as step for evaluation, otherwise each epoch.
             metric_name (str): Name of the evaluation metric.
             metric_func (Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float], optional): Function to compute the evaluation metric.
             log_dir (str, optional): Directory for storing logs. If None, logging is disabled.
@@ -448,9 +447,16 @@ class OptimAttack(UnivAttack):
             optimizer (torch.optim.Optimizer): Optimizer for training the perturbation model.
             criterion (torch.nn.Module): Loss function for computing the training loss.
             scheduler (torch.optim.lr_scheduler.LRScheduler, optional): Learning rate scheduler.
-            sched_on_batch (bool): If True, steps the scheduler on every batch.
+            sched_on_batch (bool): If True, steps the scheduler on every batch, otherwise on every epoch.
             grad_scaler (torch.GradScaler, optional): Gradient scaler for mixed precision.
             autocast (torch.autocast, optional): Autocast for mixed precision training.
+            targeted (bool): Flag indicating if the attack is targeted or not.
+            eval_freq (int): Every how many steps to evaluate the model performance.
+            eval_on_batch (bool): If true, each batch is counted as step for evaluation, otherwise each epoch.
+            metric_name (str): Name of the evaluation metric for display and logging.
+            metric_func (Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float], optional): Function to compute the evaluation metric.
+                If None, uses `eval.misclassification_rate`.
+            log_dir (str, optional): Directory for storing logs. If None, logging is disabled.
             **kwargs: Additional arguments passed to the `UnivAttack` constructor.
         """
         super().__init__(

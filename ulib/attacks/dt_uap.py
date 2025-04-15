@@ -19,12 +19,12 @@ class DTLoss(torch.nn.Module):
         clean_logits: torch.Tensor,
         targets: torch.Tensor,
     ) -> torch.Tensor:
-        
+
         if self.targeted:
             mse_loss = self.mse_loss(clean_activ, adv_activ)
             ce_loss = self.ce_loss(clean_logits, targets)
             return mse_loss + self.gamma * ce_loss
-        
+
         # TODO: WHAT SHOULD THE LOSS BE IN THE UNTARGETED CASE?
         return self.mse_loss(clean_activ, adv_activ)
 
@@ -33,6 +33,11 @@ class DT_UAP(OptimAttack):
     """
     Reference:
         Presented in "Crafting Targeted Universal Adversarial Perturbations: Considering Images as Noise": https://ieeexplore.ieee.org/document/10323453
+
+    Args:
+        activ_extractor (ActivationExtractor): Extracts outputs of the preceding layer to the last fully-connected layer.
+        alpha_step_size (float): Additive step size for the alpha parameter.
+            alpha is the weight of the input images in the forward pass.
     """
 
     def __init__(
@@ -43,7 +48,7 @@ class DT_UAP(OptimAttack):
         alpha_step_size: float = 1e-4,
         targeted: bool = False,
         **kwargs,
-    ):        
+    ):
         if alpha_step_size <= 0:
             raise ValueError("`alpha_step_size` must be > 0")
 

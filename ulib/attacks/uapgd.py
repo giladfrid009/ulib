@@ -122,6 +122,12 @@ class UAPGD(UnivAttack):
     """
     Reference:
         Presented in "Universal Adversarial Attack Via Enhanced Projected Gradient Descent": https://ieeexplore.ieee.org/document/9191288
+        
+    Args:
+        inner_attack (ulib.attacks.mipgd.MIPGD): Inner attack to use for generating adversarial examples.
+            Momentum PGD attack with L2 gradient normalization.
+        alpha_sched (ValueScheduler, optional): Scheduler for the learning-rate (alpha) parameter of the inner `MIPGD` attack.
+        sched_on_batch (bool): Whether to invoke scheduler update on each batch or each epoch.
     """
 
     def __init__(

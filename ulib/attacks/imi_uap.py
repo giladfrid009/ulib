@@ -5,6 +5,13 @@ from ulib.attack import OptimAttack
 
 
 class IMI_UAP(OptimAttack):
+    """
+    Args:
+        inner_attack (torchattacks.attack.Attack): Inner attack to be used for generating 
+            adversarial examples for each individual sample.
+        skip_already_fooled (bool): Skip samples that are already fooled by the current perturbation.
+        skip_failed_attacks (bool): Skip samples for which the inner attack fails to generate an adversarial example.
+    """
     def __init__(
         self,
         pert_model: PertModule,

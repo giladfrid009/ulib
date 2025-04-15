@@ -9,14 +9,19 @@ class FFF(OptimAttack):
     """
     Reference:
         Presented in "Fast Feature Fool: A data independent approach to universal adversarial perturbations": https://arxiv.org/pdf/1707.05572
+
+    Args:
+        divide_every (float): Divide the perturbation by 2 every `divide_every` epochs.
+            Set to 0 to disable this feature.
     """
+
     def __init__(
         self,
         pert_model: PertModule,
         optimizer: torch.optim.Optimizer,
         divide_every: float = 0,
         **kwargs,
-    ):        
+    ):
         if divide_every < 0:
             raise ValueError("`divide_every` must be >= 0")
 

@@ -8,6 +8,10 @@ class FG_UAP(OptimAttack):
     """
     Reference:
         Presented in "FG-UAP: Feature-Gathering Universal Adversarial Perturbation": https://arxiv.org/pdf/2209.13113
+        
+    Args:
+        activ_extractor (ActivationExtractor): Extracts outputs of the preceding layer to the last fully-connected layer.
+        skip_already_fooled (bool): Skip samples that are already fooled by the current perturbation.
     """
     def __init__(
         self,

@@ -10,6 +10,11 @@ class DU_ATTACK(UnivAttack):
         Presented in "Decision-based Universal Adversarial Attack": https://arxiv.org/pdf/2009.07024
         Code adapted from original peper repo: https://github.com/JingWu321/DUAttack/tree/master
         Note: Official code differs from the algorithm presented in the paper, here we use the code implementation.
+        
+    Args:
+        alpha (float): Learning rate for the perturbation.
+        beta (float): Momentum factor.
+        steps (int): Number of steps to take in the optimization process at each batch.
     """
 
     def __init__(

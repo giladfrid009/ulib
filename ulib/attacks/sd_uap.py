@@ -9,6 +9,11 @@ class SD_UAP(OptimAttack):
     """
     Reference:
         Presented in "CRAFTING DATA-FREE UNIVERSAL ADVERSARIES WITH DILATE LOSS": https://openreview.net/attachment?id=HJxVC1SYwr&name=original_pdf
+        
+    Args:
+        activ_extractor (ActivationExtractor): Extracts outputs of all layers of interest of the attacked model.
+        data_dependant (bool): Whether to use input data to compute the perturbation.
+        progress_every (int): Every this number of epochs, the attack will progress to the next layer of interest.
     """
 
     def __init__(

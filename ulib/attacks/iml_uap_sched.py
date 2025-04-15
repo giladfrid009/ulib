@@ -32,6 +32,7 @@ class IML_UAP_SCHED(OptimAttack):
         self.skip_failed_attacks = skip_failed_attacks
 
         self.logger.register_hparams(activ_extractor.get_hparams())
+        self.logger.register_hparams({f"inner_attack/{k}": v for k, v in self.inner_attack.__dict__.items()})
         self.logger.register_hparams({"inner_attack/name": self.inner_attack.__class__.__name__})
         self.logger.register_hparams({"attack/skip_already_fooled": skip_already_fooled})
         self.logger.register_hparams({"attack/skip_failed_attacks": skip_failed_attacks})

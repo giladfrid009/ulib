@@ -87,6 +87,10 @@ class AE_UAP(OptimAttack):
     """
     Reference:
         Presented in "Learning Universal Adversarial Perturbation by Adversarial Example": https://ojs.aaai.org/index.php/AAAI/article/view/20023
+            
+    Args:
+        inner_attack (ulib.attacks.ae_uap.AE_MIFGSM): Inner attack to use for generating adversarial examples.
+        gamma (float): Regularization strength for the consistency loss term, in the `AELoss` class.
     """
     def __init__(
         self,

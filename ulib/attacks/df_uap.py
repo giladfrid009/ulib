@@ -4,11 +4,6 @@ from ulib.attack import OptimAttack
 
 
 class LogitsMargin(torch.nn.Module):
-    """
-    Reference:
-        Presented in "Understanding Adversarial Examples from the Mutual Influence of Images and Perturbations": https://arxiv.org/pdf/2007.06189
-    """
-
     def __init__(self, kappa: float = 0.0, targeted: bool = False):
         super().__init__()
         self.kappa = kappa
@@ -30,6 +25,14 @@ class LogitsMargin(torch.nn.Module):
 
 
 class DF_UAP(OptimAttack):
+    """
+    Reference:
+        Presented in "Understanding Adversarial Examples from the Mutual Influence of Images and Perturbations": https://arxiv.org/pdf/2007.06189
+
+    Args:
+        kappa (float): Minimum margin between the target and the maximum non-targeted logit.
+    """
+
     def __init__(
         self,
         pert_model: PertModule,
@@ -44,7 +47,7 @@ class DF_UAP(OptimAttack):
             criterion=LogitsMargin(kappa=kappa, targeted=targeted),
             targeted=targeted,
             **kwargs,
-        )        
+        )
 
     def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
         x_batch, y_batch = data
