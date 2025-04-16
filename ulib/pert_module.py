@@ -10,7 +10,7 @@ class PertModule(nn.Module):
     A PyTorch module that applies a trainable adversarial perturbation to input data and passes it through a pretrained model.
     The model is kept in evaluation mode.
 
-    Reference:
+    ## Reference:
         Inspired by MIT-LL RAI [https://github.com/mit-ll-responsible-ai/responsible-ai-toolbox/]
     """
 

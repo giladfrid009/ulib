@@ -85,7 +85,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
 # TODO: IMPLEMENT TARGETED VARSION
 class AE_UAP(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Learning Universal Adversarial Perturbation by Adversarial Example": https://ojs.aaai.org/index.php/AAAI/article/view/20023
             
     Args:

@@ -7,7 +7,7 @@ from ulib.activation_extractor import ActivationExtractor, ActivationLoss
 
 class SD_UAP(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "CRAFTING DATA-FREE UNIVERSAL ADVERSARIES WITH DILATE LOSS": https://openreview.net/attachment?id=HJxVC1SYwr&name=original_pdf
         
     Args:

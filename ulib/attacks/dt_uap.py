@@ -31,13 +31,13 @@ class DTLoss(torch.nn.Module):
 
 class DT_UAP(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Crafting Targeted Universal Adversarial Perturbations: Considering Images as Noise": https://ieeexplore.ieee.org/document/10323453
 
     Args:
-        activ_extractor (ActivationExtractor): Extracts outputs of the preceding layer to the last fully-connected layer.
+        activ_extractor (ActivationExtractor): Extracts outputs of the layer preceeding the last fully-connected layer.
         alpha_step_size (float): Additive step size for the alpha parameter.
-            alpha is the weight of the input images in the forward pass.
+            alpha is the weight of the input images in the forward pass, and updated every batch.
     """
 
     def __init__(

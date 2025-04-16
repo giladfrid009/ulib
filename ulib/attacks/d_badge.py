@@ -17,7 +17,7 @@ class HammingLoss(torch.nn.Module):
 
 class D_BADGE(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "D-BADGE: Decision-Based Adversarial Batch Attack With Directional Gradient Estimation": https://ieeexplore.ieee.org/document/10542123
         Code inspired from original peper repo: https://github.com/AIRLABkhu/D-BADGE
 

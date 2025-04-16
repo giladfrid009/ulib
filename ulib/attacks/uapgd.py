@@ -120,7 +120,7 @@ class MIPGD(torchattacks.attack.Attack):
 
 class UAPGD(UnivAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Universal Adversarial Attack Via Enhanced Projected Gradient Descent": https://ieeexplore.ieee.org/document/9191288
         
     Args:

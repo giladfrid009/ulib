@@ -26,7 +26,7 @@ class LogitsMargin(torch.nn.Module):
 
 class DF_UAP(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Understanding Adversarial Examples from the Mutual Influence of Images and Perturbations": https://arxiv.org/pdf/2007.06189
 
     Args:

@@ -7,7 +7,7 @@ from ulib.activation_extractor import ActivationExtractor, ActivationLoss
 
 class FFF(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Fast Feature Fool: A data independent approach to universal adversarial perturbations": https://arxiv.org/pdf/1707.05572
 
     Args:

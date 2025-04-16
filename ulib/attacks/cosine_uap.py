@@ -13,7 +13,7 @@ class CosineSimilarity(torch.nn.Module):
 
 class Cosine_UAP(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Data-free Universal Adversarial Perturbation and Black-box Attack": https://ieeexplore.ieee.org/document/9710529
     """
     def __init__(

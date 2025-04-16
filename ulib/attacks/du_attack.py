@@ -6,7 +6,7 @@ import random
 
 class DU_ATTACK(UnivAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Decision-based Universal Adversarial Attack": https://arxiv.org/pdf/2009.07024
         Code adapted from original peper repo: https://github.com/JingWu321/DUAttack/tree/master
         Note: Official code differs from the algorithm presented in the paper, here we use the code implementation.

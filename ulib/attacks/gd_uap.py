@@ -6,7 +6,7 @@ from ulib.activation_extractor import ActivationExtractor, ActivationLoss
 
 class GD_UAP(OptimAttack):
     """
-    Reference:
+    ## Reference:
         Presented in "Generalizable Data-free Objective for Crafting Universal Adversarial Perturbations": https://arxiv.org/pdf/1801.08092
         
     Args:

@@ -5,7 +5,7 @@ from ulib.attacks.spm.power_method import PowerMethod, JacobianOperator
 
 class SPM_UAP:
     """
-    Reference:
+    ## Reference:
         Presented in "Art of singular vectors and universal adversarial perturbations": https://arxiv.org/pdf/1709.03582
         Code taken from: https://github.com/slayff/art_of_vectors_pytorch
     """
