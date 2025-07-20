@@ -52,19 +52,19 @@ class TensorLoader:
 
         self.tensors = tensors
         "Tuple of tensors which hold the data."
-        
+
         self.batch_size = batch_size
         "Size of batches to yield when iterating."
-        
+
         self.shuffle = shuffle
         "Whether to shuffle data when iterating."
-        
+
         self.drop_last = drop_last
         "Whether to drop the last incomplete batch."
-        
+
         self.transforms = transforms
         "Tuple of functions/transforms for each tensor. None means no transform."
-        
+
         self.tensor_names = tensor_names or tuple(f"tensor_{i}" for i in range(len(tensors)))
         "Names for each tensor for better readability or named access."
 
@@ -86,7 +86,7 @@ class TensorLoader:
                 index = self.tensor_names.index(index)
             except ValueError:
                 raise ValueError(f"Tensor name '{index}' not found")
-        return self.tensors[index][:self.total]
+        return self.tensors[index][: self.total]
 
     @classmethod
     def from_dataset(
@@ -116,7 +116,7 @@ class TensorLoader:
         tensor_lists = []
         dl = DataLoader(ds, batch_size=loader_batch_size, num_workers=loader_workers, shuffle=False)
 
-        # NOTE: tqdm shouldnt directly wrap the DataLoader since it throws 
+        # NOTE: tqdm shouldnt directly wrap the DataLoader since it throws
         # weird exceptions when using tqdm.auto and num_workers > 0
         with tqdm(desc="Extracting Samples", leave=False, total=len(dl)) as pbar:
             for batch in dl:

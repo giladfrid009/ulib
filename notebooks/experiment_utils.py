@@ -4,10 +4,10 @@ import re
 def to_class_name(s: str) -> str:
     """
     Convert a string to a valid Python class name.
-    
+
     Args:
         s: The string to convert.
-        
+
     Returns:
         A valid Python class name.
     """
@@ -16,11 +16,12 @@ def to_class_name(s: str) -> str:
         s = "_" + s
     return s.title()
 
+
 def patch_class_name(object: object, name: str):
     """
-    Patch the class name of an object. 
+    Patch the class name of an object.
     This is useful when you want to create a class with a dynamic name.
-    
+
     Args:
         object: The object to patch.
         name: The new class name.

@@ -6,7 +6,7 @@ from ulib.attack import OptimAttack
 class USGD(OptimAttack):
     """
     Universal gradient-based attack that uses an optimizer to update the perturbation.
-    
+
     Args:
         skip_already_fooled (bool): Skip samples that are already fooled by the current perturbation.
     """

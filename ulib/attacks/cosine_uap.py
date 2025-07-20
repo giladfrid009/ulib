@@ -16,6 +16,7 @@ class Cosine_UAP(OptimAttack):
     ## Reference:
         Presented in "Data-free Universal Adversarial Perturbation and Black-box Attack": https://ieeexplore.ieee.org/document/9710529
     """
+
     def __init__(
         self,
         pert_model: PertModule,

@@ -10,7 +10,7 @@ class DU_ATTACK(UnivAttack):
         Presented in "Decision-based Universal Adversarial Attack": https://arxiv.org/pdf/2009.07024
         Code adapted from original peper repo: https://github.com/JingWu321/DUAttack/tree/master
         Note: Official code differs from the algorithm presented in the paper, here we use the code implementation.
-        
+
     Args:
         alpha (float): Learning rate for the perturbation.
         beta (float): Momentum factor.
@@ -27,10 +27,10 @@ class DU_ATTACK(UnivAttack):
     ):
         if alpha <= 0:
             raise ValueError("Learning rate must be > 0")
-        
+
         if beta < 0:
             raise ValueError("Momentum factor must be >= 0")
-        
+
         super().__init__(
             pert_model=pert_model,
             **kwargs,

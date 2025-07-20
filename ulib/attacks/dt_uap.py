@@ -19,7 +19,6 @@ class DTLoss(torch.nn.Module):
         clean_logits: torch.Tensor,
         targets: torch.Tensor,
     ) -> torch.Tensor:
-
         if self.targeted:
             mse_loss = self.mse_loss(clean_activ, adv_activ)
             ce_loss = self.ce_loss(clean_logits, targets)

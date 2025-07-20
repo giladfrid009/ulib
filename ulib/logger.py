@@ -162,7 +162,7 @@ class Logger:
             img = img[0]
 
         self.tb_writer.add_image(tag, img, step)
-        
+
     def add_graph(self, model: torch.nn.Module, input: torch.Tensor):
         """
         Logs the model graph.
@@ -175,7 +175,7 @@ class Logger:
             return
 
         self.tb_writer.add_graph(model, input)
-                
+
     def add_tags(self, **tags):
         """
         Adds tags to Tensorboard and the ClearML task.

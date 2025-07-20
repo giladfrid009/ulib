@@ -35,7 +35,7 @@ class PertModule(nn.Module):
             random_init (bool): If True, randomly initializes the perturbation within the epsilon-ball.
             input_range (tuple[float, float] | tuple[torch.Tensor, torch.Tensor]): Input data range.
             input_clamp (bool): If True, clamps the input data to the input_range after applying the perturbation.
-            """
+        """
         super().__init__()
 
         if norm < 1:

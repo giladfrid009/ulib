@@ -31,6 +31,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
     """
     MI-FGSM variant presented in https://ojs.aaai.org/index.php/AAAI/article/view/20023
     """
+
     def __init__(
         self,
         model: nn.Module,
@@ -71,7 +72,9 @@ class AE_MIFGSM(torchattacks.attack.Attack):
             grad_norm = grad_norm.reshape(-1, 1, 1, 1)
 
             momentum = self.decay * momentum - grad / grad_norm
-            momentum_norm = torch.norm(momentum.view(momentum.size(0), -1), p=2, dim=1) + torch.finfo(momentum.dtype).eps
+            momentum_norm = (
+                torch.norm(momentum.view(momentum.size(0), -1), p=2, dim=1) + torch.finfo(momentum.dtype).eps
+            )
             momentum_norm = momentum_norm.reshape(-1, 1, 1, 1)
 
             adv_images = adv_images - self.alpha * momentum / momentum_norm
@@ -87,11 +90,12 @@ class AE_UAP(OptimAttack):
     """
     ## Reference:
         Presented in "Learning Universal Adversarial Perturbation by Adversarial Example": https://ojs.aaai.org/index.php/AAAI/article/view/20023
-            
+
     Args:
         inner_attack (ulib.attacks.ae_uap.AE_MIFGSM): Inner attack to use for generating adversarial examples.
         gamma (float): Regularization strength for the consistency loss term, in the `AELoss` class.
     """
+
     def __init__(
         self,
         pert_model: PertModule,
@@ -109,11 +113,11 @@ class AE_UAP(OptimAttack):
             criterion=AELoss(gamma=gamma),
             targeted=False,
             **kwargs,
-        )        
+        )
 
         self.inner_attack = inner_attack
         self.inner_attack.set_criterion(self.criterion)
-        
+
         self.logger.register_hparams({f"inner_attack/{k}": v for k, v in inner_attack.__dict__.items()})
         self.logger.register_hparams({"inner_attack/name": inner_attack.__class__.__name__})
 

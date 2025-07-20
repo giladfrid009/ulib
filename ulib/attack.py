@@ -260,7 +260,9 @@ class UnivAttack(ABC):
             eps=f"{self.pert_model.eps:4f}",
         )
         self.logger.log_hparams()
-        self.logger.add_graph(self.orig_model, torch.rand(self.pert_model.shape, device=self.device, dtype=self.pert_model.dtype))
+        self.logger.add_graph(
+            self.orig_model, torch.rand(self.pert_model.shape, device=self.device, dtype=self.pert_model.dtype)
+        )
 
         # Init Stats
         self.init_metric = self.metric_func(self.pert_model, dl_eval)

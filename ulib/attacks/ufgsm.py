@@ -33,6 +33,7 @@ class UFGSM(OptimAttack):
     Universal Fast Gradient Sign Method (UFGSM) attack.
     Applies `torch.sign` to the gradients of the model's parameters before applying the internal optimizer step.
     """
+
     def __init__(
         self,
         pert_model: PertModule,

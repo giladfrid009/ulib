@@ -18,7 +18,7 @@ class ValueScheduler:
         self.param = torch.nn.Parameter(torch.tensor([init_value], dtype=torch.float))
         self.optimizer = torch.optim.SGD([self.param], lr=init_value)
         self.scheduler: torch.optim.lr_scheduler.LRScheduler = sched_cls(self.optimizer, **kwargs)
-        
+
         self.optimizer.step()
 
     def step(self) -> float:
@@ -87,7 +87,6 @@ class MIPGD(torchattacks.attack.Attack):
         loss_fn = nn.CrossEntropyLoss()
 
         for _ in range(self.steps):
-
             with torch.enable_grad():
                 # Forward and backward pass to compute the gradient
                 adv_images = torch.clamp(images + delta, 0, 1)
@@ -122,7 +121,7 @@ class UAPGD(UnivAttack):
     """
     ## Reference:
         Presented in "Universal Adversarial Attack Via Enhanced Projected Gradient Descent": https://ieeexplore.ieee.org/document/9191288
-        
+
     Args:
         inner_attack (ulib.attacks.mipgd.MIPGD): Inner attack to use for generating adversarial examples.
             Momentum PGD attack with L2 gradient normalization.
@@ -191,7 +190,7 @@ class UAPGD(UnivAttack):
         x_pert = x_pert[suc_mask]
 
         delta = torch.sum(x_attk - x_pert, dim=0, keepdim=True)
-        
+
         pert = self.pert_model.get_pert(clone=False)
         new_pert = self.pert_model.project(pert + delta)
         self.pert_model.set_pert(new_pert)

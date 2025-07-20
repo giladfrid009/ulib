@@ -15,7 +15,6 @@ def load_torchvision_experiment(
     silent: bool = False,
     **model_kwargs,
 ) -> tuple[nn.Module, TensorLoader, TensorLoader]:
-
     utils.clear_memory()
     device = utils.get_device()
 

@@ -8,7 +8,7 @@ class GD_UAP(OptimAttack):
     """
     ## Reference:
         Presented in "Generalizable Data-free Objective for Crafting Universal Adversarial Perturbations": https://arxiv.org/pdf/1801.08092
-        
+
     Args:
         data_dependant (bool): If True, the perturbation is computed using the input data.
             If False, the perturbation is computed using a random sample from input mean and std.
@@ -19,6 +19,7 @@ class GD_UAP(OptimAttack):
             If the saturation rate is above `sat_thresh` and changed less than this value,
             the perturbation is divided by 2.
     """
+
     def __init__(
         self,
         pert_model: PertModule,
@@ -30,11 +31,13 @@ class GD_UAP(OptimAttack):
     ):
         if sat_thresh < 0.0 or sat_thresh > 1.0:
             raise ValueError("`sat_thresh` must be in [0, 1]")
-        
+
         if sat_delta < 0.0 or sat_delta > 1.0:
             raise ValueError("`sat_delta` must be in [0, 1]")
-        
-        criterion = ActivationLoss(loss_fn=lambda v: -torch.log(torch.sum(torch.square(v) / 2, dim=1) + torch.finfo(v.dtype).eps))
+
+        criterion = ActivationLoss(
+            loss_fn=lambda v: -torch.log(torch.sum(torch.square(v) / 2, dim=1) + torch.finfo(v.dtype).eps)
+        )
 
         super().__init__(
             pert_model=pert_model,

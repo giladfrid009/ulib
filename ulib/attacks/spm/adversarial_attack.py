@@ -9,6 +9,7 @@ class SPM_UAP:
         Presented in "Art of singular vectors and universal adversarial perturbations": https://arxiv.org/pdf/1709.03582
         Code taken from: https://github.com/slayff/art_of_vectors_pytorch
     """
+
     def __init__(
         self,
         input_shape: tuple[int, ...],

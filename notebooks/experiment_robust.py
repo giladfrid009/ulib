@@ -47,7 +47,6 @@ def load_robust_experiment(
     batch_size: int = 256,
     silent: bool = False,
 ) -> tuple[nn.Module, TensorLoader, TensorLoader]:
-
     dataset = dataset.lower()
 
     assert dataset in ["cifar10", "cifar100", "imagenet"], f"Unknown dataset: {dataset}"

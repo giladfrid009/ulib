@@ -40,9 +40,9 @@ class JacobianOperator:
 class PowerMethod:
     def __init__(
         self,
-        p: float=2,
-        q: float=2,
-        maxiter: int=20,
+        p: float = 2,
+        q: float = 2,
+        maxiter: int = 20,
         device=torch.device("cpu"),
         verbose=0,
     ):

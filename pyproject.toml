@@ -1,0 +1,20 @@
+[project]
+name = "ulib"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "clearml>=2.0.2",
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.7",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.3",
+    "numpy>=2.3.1",
+    "robustbench>=1.1.1",
+    "tensorboard>=2.20.0",
+    "torch>=2.7.1",
+    "torchattacks>=3.3.0",
+    "torchvision>=0.22.1",
+    "tqdm>=4.67.1",
+]

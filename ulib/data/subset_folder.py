@@ -6,6 +6,7 @@ from typing import Any, Callable, Optional, Union
 from torchvision.datasets import DatasetFolder
 from torchvision.datasets.folder import default_loader, has_file_allowed_extension, find_classes, IMG_EXTENSIONS
 
+
 def make_partial_dataset(
     directory: str | Path,
     total_size: int,
@@ -27,7 +28,7 @@ def make_partial_dataset(
         _, class_to_idx = find_classes(directory)
     elif not class_to_idx:
         raise ValueError("'class_to_index' must have at least one entry to collect any samples.")
-    
+
     if extensions is None and is_valid_file is None:
         raise ValueError("Both extensions and is_valid_file cannot both be None at the same time")
 
@@ -35,7 +36,7 @@ def make_partial_dataset(
         raise ValueError("Both extensions and is_valid_file cannot both be not None at the same time")
 
     if is_valid_file is None:
-        is_valid_file = lambda x: has_file_allowed_extension(x, extensions) # type: ignore
+        is_valid_file = lambda x: has_file_allowed_extension(x, extensions)  # type: ignore
 
     num_classes = len(class_to_idx)
     base_size = total_size // num_classes
@@ -49,22 +50,20 @@ def make_partial_dataset(
     instances = []
     available_classes = set()
     for target_class in sorted(class_to_idx.keys()):
-        
         class_index = class_to_idx[target_class]
         class_size = base_size + (1 if class_index in leftover_classes else 0)
         collected = 0
-        
+
         if class_size == 0:
             continue
-        
+
         class_dir = os.path.join(directory, target_class)
-        
+
         if not os.path.isdir(class_dir):
             continue
-        
+
         with os.scandir(class_dir) as dir_it:
             for entry in dir_it:
-                
                 if not entry.is_file():
                     continue
                 if not is_valid_file(entry.path):
@@ -85,10 +84,10 @@ def make_partial_dataset(
     if empty_classes and not allow_empty:
         if extensions is None:
             extensions = ".*"
-            
+
         msg = f"""Some classes are empty while `allow_empty=False`.
-        Following classes are empty: {', '.join(sorted(empty_classes))}.
-        Supported extensions are: {extensions if isinstance(extensions, str) else ', '.join(extensions)}"""
+        Following classes are empty: {", ".join(sorted(empty_classes))}.
+        Supported extensions are: {extensions if isinstance(extensions, str) else ", ".join(extensions)}"""
         raise FileNotFoundError(msg)
 
     return instances
