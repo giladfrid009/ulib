@@ -103,9 +103,9 @@ def fooling_rate(
     mismatches = torch.zeros(1, device=device, dtype=torch.int64)
     for x, y in tqdm(dl_eval, desc="Evaluating", leave=False, disable=silent):
         x, y = x.to(device), y.to(device)
-        pred_clean = pert_module.model(x).argmax(dim=1)
-        pred_adver = pert_module(x).argmax(dim=1)
-        mismatches += (pred_clean != pred_adver).sum()
+        pred_cln = pert_module.model(x).argmax(dim=1)
+        pred_adv = pert_module(x).argmax(dim=1)
+        mismatches += (pred_cln != pred_adv).sum()
         total += len(y)
 
     pert_module.train(mode)
@@ -134,19 +134,19 @@ def attack_success_ratio(
     device = utils.extract_device(pert_module)
 
     total = 0
-    corr_clean = torch.zeros(1, device=device, dtype=torch.int64)
-    corr_adver = torch.zeros(1, device=device, dtype=torch.int64)
+    corr_cln = torch.zeros(1, device=device, dtype=torch.int64)
+    corr_adv = torch.zeros(1, device=device, dtype=torch.int64)
     for x, y in tqdm(dl_eval, desc="Evaluating", leave=False, disable=silent):
         x, y = x.to(device), y.to(device)
-        pred_clean = pert_module.model(x).argmax(dim=1)
-        pred_adver = pert_module(x).argmax(dim=1)
-        corr_clean += (pred_clean == y).sum()
-        corr_adver += (pred_adver == y).sum()
+        pred_cln = pert_module.model(x).argmax(dim=1)
+        pred_adv = pert_module(x).argmax(dim=1)
+        corr_cln += (pred_cln == y).sum()
+        corr_adv += (pred_adv == y).sum()
         total += len(y)
 
     pert_module.train(mode)
-    clean_acc = corr_clean.item() / total
-    robust_acc = corr_adver.item() / total
+    clean_acc = corr_cln.item() / total
+    robust_acc = corr_adv.item() / total
     return (clean_acc - robust_acc) / clean_acc
 
 
@@ -182,7 +182,7 @@ def full_analysis(
     for metric, value in results.items():
         print(f"{metric.replace('_', ' ').title():<25}: {value:.4f}")
 
-    ax = display_pert(pert_module)
+    display_pert(pert_module)
     plt.show()
 
     return results

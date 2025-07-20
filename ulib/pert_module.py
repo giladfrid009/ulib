@@ -28,7 +28,7 @@ class PertModule(nn.Module):
         Initialize the PertModule.
 
         Args:
-            model (nn.Module): The attacked pertrained model.
+            model (nn.Module): The attacked pretrained model.
             data_shape (tuple[int, ...]): Shape of the input data.
             eps (float): Maximum allowable magnitude of the perturbation.
             norm (float): Perturbation norm constraint; must be >= 1, supports float("inf") as infinity norm.

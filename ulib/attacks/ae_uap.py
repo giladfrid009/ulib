@@ -50,7 +50,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
     def set_criterion(self, criterion: torch.nn.Module):
         self.criterion = criterion
 
-    def forward(self, images, labels):
+    def forward(self, images: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         r"""
         Overridden.
         """

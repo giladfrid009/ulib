@@ -48,18 +48,25 @@ ULib is a modular, PyTorch-based framework for generating universal adversarial 
 
 ## Installation
 
-ULib requires PyTorch and several standard Python libraries. You can install the required dependencies using the provided [requirements.yaml](requirements.yaml) file. For example:
+To install the dependencies of this project, please use the ***uv*** dependency manager. (highly recommended)   
+*Note:* If you dont have ***uv*** installed, see docs at the [official website](https://docs.astral.sh/uv/getting-started/installation/).
 
-```bash
-# Create and activate your virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
+#### Dependencies:
 
-# Install dependencies (if using pip with a converted requirements file)
-pip install -r requirements.txt
-```
+The dependencies are located in two files:
+* ```pyproject.toml``` - contains the general package names and versions, should be enough for standard installations.
+* ```uv.lock``` - contains exact versions of all installed packages. 
 
-> **Note:** You may need to convert the `requirements.yaml` to a `requirements.txt` format or use a tool like `conda` if you prefer working with YAML environment files.
+#### Steps:
+
+1. Clone Repo from github
+2. Navigate to the repo folder
+3. Run the following command in your terminal: ```uv sync```
+
+#### Env Activation:
+
+1. Navigate to the repo folder
+2. Run the following command in your terminal: ```source ./.venv/bin/activate```
 
 ---
 

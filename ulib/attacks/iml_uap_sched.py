@@ -40,7 +40,7 @@ class IML_UAP_SCHED(OptimAttack):
     def make_attack(self, epoch_num: int) -> torchattacks.attack.Attack:
         inner_attack = self.attack_builder_func(self.orig_model, epoch_num)
         if self.targeted:
-            inner_attack.set_mode_targeted_by_label(quiet=True)
+            inner_attack.set_mode_targeted_by_function(lambda inp, lbl: lbl)
         return inner_attack
 
     def on_epoch_start(self, dl_train: Iterable[tuple[torch.Tensor, ...]], epoch_num: int):

@@ -19,7 +19,7 @@ class D_BADGE(OptimAttack):
     """
     ## Reference:
         Presented in "D-BADGE: Decision-Based Adversarial Batch Attack With Directional Gradient Estimation": https://ieeexplore.ieee.org/document/10542123
-        Code inspired from original peper repo: https://github.com/AIRLABkhu/D-BADGE
+        Code inspired from original paper repo: https://github.com/AIRLABkhu/D-BADGE
 
     Args:
         delta (float): L-inf radius of the random noise at which the gradient is estimated.

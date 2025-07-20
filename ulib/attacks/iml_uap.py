@@ -54,7 +54,7 @@ class IML_UAP(OptimAttack):
         self.skip_failed_attacks = skip_failed_attacks
 
         if self.targeted:
-            self.inner_attack.set_mode_targeted_by_label(quiet=True)
+            self.inner_attack.set_mode_targeted_by_function(lambda inp, lbl: lbl)
 
         self.logger.register_hparams(activ_extractor.get_hparams())
         self.logger.register_hparams({f"inner_attack/{k}": v for k, v in inner_attack.__dict__.items()})
