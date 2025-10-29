@@ -141,7 +141,7 @@ attack = GD_UAP(
     data_dependant=True,
     sat_thresh=0.5,
     sat_delta=1e-5,
-    log_dir="logs",
+    logging_enable=True,
 )
 
 # 5. Define stopping criteria
@@ -206,7 +206,7 @@ attack = USGD(
     eval_on_batch=True,
     targeted=False,
     metric_func=eval.attack_success_ratio,
-    log_dir="logs",
+    logging_enable=True,
 )
 
 # 8. Define stopping criteria with patience

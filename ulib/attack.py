@@ -128,7 +128,7 @@ class UnivAttack(ABC):
         eval_on_batch: bool = False,
         metric_name: str = "metric",
         metric_func: Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float] | None = None,
-        log_dir: str | None = None,
+        logging_enable: bool = False,
     ):
         """
         Base class for universal adversarial attacks. This class provides a framework for generating
@@ -143,7 +143,7 @@ class UnivAttack(ABC):
             eval_on_batch (bool): If true, each batch is counted as step for evaluation, otherwise each epoch.
             metric_name (str): Name of the evaluation metric.
             metric_func (Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float], optional): Function to compute the evaluation metric.
-            log_dir (str, optional): Directory for storing logs. If None, logging is disabled.
+            logging_enable (bool): If true, enables logging of metrics and hyperparameters.
         """
         if eval_freq <= 0:
             raise ValueError("Evaluation frequency must be greater than 0.")
@@ -173,7 +173,7 @@ class UnivAttack(ABC):
             f"Eps_{self.pert_model.eps:.4f}",
             project="CLF-IML",
             root_dir="logs",
-            disabled=log_dir is None,  # TODO: fix log_dir arg afterwards
+            disabled=not logging_enable,
         )
 
         self.metric_logger.report_hparams(
@@ -413,7 +413,7 @@ class OptimAttack(UnivAttack):
             metric_name (str): Name of the evaluation metric for display and logging.
             metric_func (Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float], optional): Function to compute the evaluation metric.
                 If None, uses `eval.misclassification_rate`.
-            log_dir (str, optional): Directory for storing logs. If None, logging is disabled.
+            logging_enable (bool): If true, enables logging of metrics and hyperparameters.
             **kwargs: Additional arguments passed to the `UnivAttack` constructor.
         """
         super().__init__(
