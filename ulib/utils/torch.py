@@ -1,21 +1,6 @@
 import torch
-import numpy
-import random
 import gc
-
-
-def set_seed(seed: int) -> None:
-    """
-    Set the seed for reproducibility.
-
-    Args:
-        seed (int): Seed to set.
-    """
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    numpy.random.seed(seed)
-    random.seed(seed)
+from pathlib import Path as Path
 
 
 def get_device() -> torch.device:

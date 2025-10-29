@@ -7,7 +7,7 @@ from matplotlib.image import AxesImage
 from tqdm.auto import tqdm
 
 from ulib.pert_module import PertModule
-from ulib import utils
+from ulib.utils.torch import extract_device
 
 
 def display_pert(pert_module: PertModule) -> AxesImage:
@@ -47,7 +47,7 @@ def accuracy(
     """
     mode = model.training
     model.eval()
-    device = utils.extract_device(model)
+    device = extract_device(model)
 
     total = 0
     correct = torch.zeros(1, device=device, dtype=torch.int64)
@@ -97,7 +97,7 @@ def fooling_rate(
     """
     mode = pert_module.training
     pert_module.eval()
-    device = utils.extract_device(pert_module)
+    device = extract_device(pert_module)
 
     total = 0
     mismatches = torch.zeros(1, device=device, dtype=torch.int64)
@@ -131,7 +131,7 @@ def attack_success_ratio(
     """
     mode = pert_module.training
     pert_module.eval()
-    device = utils.extract_device(pert_module)
+    device = extract_device(pert_module)
 
     total = 0
     corr_cln = torch.zeros(1, device=device, dtype=torch.int64)

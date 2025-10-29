@@ -63,15 +63,21 @@ class DT_UAP(OptimAttack):
         self.alpha_step_size = alpha_step_size
         self.step_num = 0
 
-        self.logger.register_hparams(activ_extractor.get_hparams())
-        self.logger.register_hparams({"attack/alpha_step_size": alpha_step_size})
+        self.metric_logger.report_hparams("activ_extractor", activ_extractor.get_hparams())
+        self.metric_logger.report_hparams("attack", alpha_step_size=alpha_step_size)
 
     def get_alpha(self, step: int, step_size: float) -> float:
         return min(1.0, step * step_size)
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor:
         alpha = self.get_alpha(self.step_num, step_size=self.alpha_step_size)
-        self.logger.log_scalar("alpha", alpha)
+        self.metric_logger.report_scalar("alpha", alpha, step_num)
         self.step_num += 1
 
         x_batch, y_batch = data

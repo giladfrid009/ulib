@@ -2,7 +2,7 @@ from __future__ import annotations
 import torch
 from torch import nn
 from typing import Iterator
-from ulib import utils
+from ulib.utils.torch import extract_device, sample_lp_ball
 
 
 class PertModule(nn.Module):
@@ -46,7 +46,7 @@ class PertModule(nn.Module):
         self.model = model.eval()
         self.model.requires_grad_(False)
 
-        self.device = utils.extract_device(model)
+        self.device = extract_device(model)
         self.data_shape = data_shape
         self.eps = eps
         self.norm = norm
@@ -75,14 +75,14 @@ class PertModule(nn.Module):
             dict[str, object]: Dictionary of hyperparameters.
         """
         return {
-            "pert/name": self.__class__.__name__,
-            "pert/eps": self.eps,
-            "pert/norm": self.norm,
-            "pert/shape": str(self.shape),
-            "pert/dtype": str(self.dtype),
-            "pert/random_init": self.rnd_init,
-            "pert/input_range": str(self.input_range),
-            "pert/input_clamp": self.input_clamp,
+            "name": self.__class__.__name__,
+            "eps": self.eps,
+            "norm": self.norm,
+            "shape": str(self.shape),
+            "dtype": str(self.dtype),
+            "random_init": self.rnd_init,
+            "input_range": str(self.input_range),
+            "input_clamp": self.input_clamp,
         }
 
     @torch.no_grad()
@@ -127,7 +127,7 @@ class PertModule(nn.Module):
         if self.norm == float("inf"):
             rnd = torch.empty_like(self._pert).uniform_(-self.eps, self.eps)
         elif self.norm >= 1:
-            rnd = utils.sample_lp_ball(self._pert.numel(), self.norm, device=self.device)
+            rnd = sample_lp_ball(self._pert.numel(), self.norm, device=self.device)
             rnd = (rnd * self.eps).view_as(self._pert)
         else:
             raise ValueError(f"Invalid norm value: {self.norm}")

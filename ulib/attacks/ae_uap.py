@@ -4,7 +4,6 @@ import torchattacks
 import torchattacks.attack
 from ulib.attack import OptimAttack
 from ulib.pert_module import PertModule
-import torch
 
 
 class AELoss(torch.nn.Module):
@@ -118,10 +117,19 @@ class AE_UAP(OptimAttack):
         self.inner_attack = inner_attack
         self.inner_attack.set_criterion(self.criterion)
 
-        self.logger.register_hparams({f"inner_attack/{k}": v for k, v in inner_attack.__dict__.items()})
-        self.logger.register_hparams({"inner_attack/name": inner_attack.__class__.__name__})
+        self.metric_logger.report_hparams(
+            "inner_attack",
+            inner_attack.__dict__,
+            name=inner_attack.__class__.__name__,
+        )
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor:
         x_batch, y_batch = data
         with self.autocast_context(enabled=False):
             x_attk = self.inner_attack.forward(x_batch, y_batch)

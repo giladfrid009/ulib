@@ -40,9 +40,12 @@ class DU_ATTACK(UnivAttack):
         self.beta = beta
         self.steps = steps
 
-        self.logger.register_hparams({"attack/alpha": alpha})
-        self.logger.register_hparams({"attack/beta": beta})
-        self.logger.register_hparams({"attack/steps": steps})
+        self.metric_logger.report_hparams(
+            "attack",
+            alpha=alpha,
+            beta=beta,
+            steps=steps,
+        )
 
     def generate_noise(self) -> torch.Tensor:
         C, H, W = self.pert_model.data_shape
@@ -62,7 +65,13 @@ class DU_ATTACK(UnivAttack):
         return skewed_eye
 
     @torch.no_grad()
-    def process_batch(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> float | None:
+    def process_batch(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> float | None:
         x_batch, y_batch = data
 
         corr_left = 1.0

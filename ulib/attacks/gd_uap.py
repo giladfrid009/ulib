@@ -55,28 +55,37 @@ class GD_UAP(OptimAttack):
         self.prev_sat = 0.0
         self.curr_sat = 0.0
 
-        self.logger.register_hparams(self.extractor.get_hparams())
-        self.logger.register_hparams({"attack/data_dependant": data_dependant})
-        self.logger.register_hparams({"attack/sat_thresh": sat_thresh})
-        self.logger.register_hparams({"attack/sat_delta": sat_delta})
+        self.metric_logger.report_hparams("activ_extractor", self.extractor.get_hparams())
 
-    def saturation_rate(self, pert: torch.Tensor, eps: float) -> torch.Tensor:
-        return torch.sum(torch.abs(pert) == eps).float() / torch.numel(pert)
+        self.metric_logger.report_hparams(
+            "attack",
+            data_dependant=data_dependant,
+            sat_thresh=sat_thresh,
+            sat_delta=sat_delta,
+        )
 
-    def on_batch_start(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int):
+    def saturation_rate(self, pert: torch.Tensor, eps: float) -> float:
+        return torch.sum(torch.abs(pert) == eps).float().item() / torch.numel(pert)
+
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor:
         # Compute saturation rate
         self.prev_sat = self.curr_sat
         pert = self.pert_model.get_pert(clone=False)
         self.curr_sat = self.saturation_rate(pert, self.pert_model.eps)
-        self.logger.log_scalar("saturation", self.curr_sat)
+        self.metric_logger.report_scalar("saturation", self.curr_sat, step_num)
 
         # Divide pert if saturation rate is too high
-        if self.curr_sat > self.sat_thresh and torch.abs(self.curr_sat - self.prev_sat) < self.sat_delta:
+        if self.curr_sat > self.sat_thresh and abs(self.curr_sat - self.prev_sat) < self.sat_delta:
             with torch.no_grad():
                 pert.divide_(2.0)
                 self.curr_sat = 0.0
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
         x_batch, _ = data
         if self.data_dependant:
             input = x_batch

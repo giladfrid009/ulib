@@ -1,4 +1,3 @@
-from typing import Iterable
 import torch
 from ulib.pert_module import PertModule
 from ulib.attack import OptimAttack
@@ -57,23 +56,37 @@ class D_BADGE(OptimAttack):
         self.delta_decay = delta_decay
         self.gamma = gamma
 
-        self.logger.register_hparams({"attack/delta": delta})
-        self.logger.register_hparams({"attack/delta_decay": delta_decay})
-        self.logger.register_hparams({"attack/gamma": gamma})
+        self.metric_logger.report_hparams(
+            "attack",
+            delta=delta,
+            delta_decay=delta_decay,
+            gamma=gamma,
+        )
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor:
         x_batch, y_batch = data
         preds = self.pert_model(x_batch)
         loss = self.criterion(preds, y_batch)
         return loss
 
-    def on_epoch_start(self, dl_train: Iterable[tuple[torch.Tensor, ...]], epoch_num: int):
-        if epoch_num > 0:
+    @torch.no_grad()
+    def process_batch(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> float | None:
+        if batch_num == 0 and epoch_num > 0:
             # Decay delta
             self.delta = self.delta * self.delta_decay
 
-    @torch.no_grad()
-    def process_batch(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> float | None:
         self.optimizer.zero_grad()
 
         pert = self.pert_model.get_pert(clone=False)
@@ -82,10 +95,10 @@ class D_BADGE(OptimAttack):
 
         with self.autocast_context():
             self.pert_model.set_pert(pert - vec)
-            loss_neg = self.compute_loss(data, batch_num, epoch_num)
+            loss_neg = self.compute_loss(data, batch_num, epoch_num, step_num)
 
             self.pert_model.set_pert(pert + vec)
-            loss_pos = self.compute_loss(data, batch_num, epoch_num)
+            loss_pos = self.compute_loss(data, batch_num, epoch_num, step_num)
 
         # Restore perturbation
         self.pert_model.set_pert(pert)
@@ -110,7 +123,7 @@ class D_BADGE(OptimAttack):
 
         # Update learning rate scheduler if enabled.
         if self.scheduler is not None and (self.sched_on_batch or batch_num == 0):
-            self.logger.log_scalar("lr", self.scheduler.get_last_lr()[0])
+            self.metric_logger.report_scalar("lr", self.scheduler.get_last_lr()[0], step_num)
             self.scheduler.step()
 
         return pert.grad.norm().item()

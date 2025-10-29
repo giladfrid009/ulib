@@ -34,10 +34,16 @@ class FG_UAP(OptimAttack):
         self.extractor = activ_extractor
         self.skip_already_fooled = skip_already_fooled
 
-        self.logger.register_hparams(activ_extractor.get_hparams())
-        self.logger.register_hparams({"attack/skip_already_fooled": skip_already_fooled})
+        self.metric_logger.report_hparams("activ_extractor", activ_extractor.get_hparams())
+        self.metric_logger.report_hparams("attack", skip_already_fooled=skip_already_fooled)
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor | None:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor | None:
         x_batch, y_batch = data
         with self.extractor.capture():
             preds = self.pert_model(x_batch)

@@ -1,4 +1,3 @@
-from typing import Iterable
 import torch
 import torch.nn as nn
 import torchattacks.attack
@@ -147,25 +146,35 @@ class UAPGD(UnivAttack):
         self.alpha_sched = alpha_sched
         self.sched_on_batch = sched_on_batch
 
-        self.logger.register_hparams({f"inner_attack/{k}": v for k, v in inner_attack.__dict__.items()})
-        self.logger.register_hparams({"inner_attack/name": inner_attack.__class__.__name__})
-        self.logger.register_hparams({"attack/sched_on_batch": sched_on_batch})
+        self.metric_logger.report_hparams("attack", sched_on_batch=sched_on_batch)
+        self.metric_logger.report_hparams(
+            "inner_attack",
+            inner_attack.__dict__,
+            name=inner_attack.__class__.__name__,
+        )
         if alpha_sched is not None:
-            self.logger.register_hparams({f"alpha_sched/{k}": v for k, v in alpha_sched.scheduler.state_dict().items()})
-            self.logger.register_hparams({"alpha_sched/name": alpha_sched.scheduler.__class__.__name__})
-
-    def on_batch_start(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int):
-        if self.alpha_sched is not None and self.sched_on_batch:
-            self.logger.log_scalar("inner_attack/alpha", self.inner_attack.alpha)
-            self.inner_attack.alpha = self.alpha_sched.step()
-
-    def on_epoch_start(self, dl_train: Iterable[tuple[torch.Tensor, ...]], epoch_num: int):
-        if self.alpha_sched is not None and not self.sched_on_batch:
-            self.logger.log_scalar("inner_attack/alpha", self.inner_attack.alpha)
-            self.inner_attack.alpha = self.alpha_sched.step()
+            self.metric_logger.report_hparams(
+                "alpha_sched",
+                alpha_sched.scheduler.state_dict(),
+                name=alpha_sched.scheduler.__class__.__name__,
+            )
 
     @torch.no_grad()
-    def process_batch(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> float | None:
+    def process_batch(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> float | None:
+        # update alpha if needed
+        if batch_num == 0 and self.alpha_sched is not None and not self.sched_on_batch:
+            self.inner_attack.alpha = self.alpha_sched.step()
+        elif self.alpha_sched is not None and self.sched_on_batch:
+            self.inner_attack.alpha = self.alpha_sched.step()
+
+        self.metric_logger.report_scalar("inner_attack/alpha", self.inner_attack.alpha, step_num)
+
         x_batch, y_batch = data
 
         # attack only correctly classified samples

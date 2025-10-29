@@ -1,5 +1,4 @@
 import torch
-from typing import Iterable
 from ulib.pert_module import PertModule
 from ulib.attack import OptimAttack
 from ulib.activation_extractor import ActivationExtractor, ActivationLoss
@@ -39,16 +38,21 @@ class FFF(OptimAttack):
 
         self.divide_every = divide_every
         self.extractor = ActivationExtractor(pert_model.model, torch.nn.Conv2d)
-        self.logger.register_hparams(self.extractor.get_hparams())
-        self.logger.register_hparams({"attack/divide_every": divide_every})
+        self.metric_logger.report_hparams("activ_extractor", self.extractor.get_hparams())
+        self.metric_logger.report_hparams("attack", divide_every=divide_every)
 
-    def on_epoch_start(self, dl_train: Iterable[tuple[torch.Tensor, ...]], epoch_num: int):
-        if epoch_num > 0 and self.divide_every > 0 and epoch_num % self.divide_every == 0:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor:
+        if batch_num == 0 and epoch_num > 0 and self.divide_every > 0 and epoch_num % self.divide_every == 0:
             with torch.no_grad():
                 pert = self.pert_model.get_pert(clone=False)
                 pert.divide_(2.0)
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
         input = torch.zeros(self.pert_model.shape)
         with self.extractor.capture():
             self.pert_model(input)

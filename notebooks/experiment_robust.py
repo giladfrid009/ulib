@@ -4,7 +4,8 @@ from robustbench.utils import load_model as robust_load_model
 from robustbench.data import get_preprocessing as robust_get_preprocessing
 from robustbench.model_zoo.enums import ThreatModel, BenchmarkDataset
 
-from ulib import utils, eval
+from ulib import eval
+from ulib.utils.torch import clear_memory, get_device
 from ulib.data import TensorLoader
 from notebooks.datasets import load_cifar10, load_cifar100, load_imagenet
 from notebooks.experiment_utils import patch_class_name
@@ -52,8 +53,8 @@ def load_robust_experiment(
     assert dataset in ["cifar10", "cifar100", "imagenet"], f"Unknown dataset: {dataset}"
     assert norm in ["Linf", "L2"], f"Unknown norm: {norm}"
 
-    utils.clear_memory()
-    device = utils.get_device()
+    clear_memory()
+    device = get_device()
     ds_enum = BenchmarkDataset(dataset)
     norm_emum = ThreatModel(norm)
 

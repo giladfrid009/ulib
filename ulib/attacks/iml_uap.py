@@ -6,26 +6,26 @@ from ulib.activation_extractor import ActivationExtractor, ActivationLoss
 
 
 class CosSim(ActivationLoss):
-    def __init__(self, aggr_fn=None):
+    def __init__(self, reduction="sum-mean"):
         super().__init__(
             loss_fn=lambda v1, v2: 1.0 - torch.cosine_similarity(v1, v2, dim=-1),
-            aggr_fn=aggr_fn,
+            reduction=reduction,
         )
 
 
 class L2Diff(ActivationLoss):
-    def __init__(self, aggr_fn=None):
+    def __init__(self, reduction="sum-mean"):
         super().__init__(
             loss_fn=lambda v1, v2: torch.sum(torch.square(v1 - v2), dim=-1) / 2,
-            aggr_fn=aggr_fn,
+            reduction=reduction,
         )
 
 
 class L1Diff(ActivationLoss):
-    def __init__(self, aggr_fn=None):
+    def __init__(self, reduction="sum-mean"):
         super().__init__(
             loss_fn=lambda v1, v2: torch.sum(torch.abs(v1 - v2), dim=-1),
-            aggr_fn=aggr_fn,
+            reduction=reduction,
         )
 
 
@@ -56,13 +56,25 @@ class IML_UAP(OptimAttack):
         if self.targeted:
             self.inner_attack.set_mode_targeted_by_function(lambda inp, lbl: lbl)
 
-        self.logger.register_hparams(activ_extractor.get_hparams())
-        self.logger.register_hparams({f"inner_attack/{k}": v for k, v in inner_attack.__dict__.items()})
-        self.logger.register_hparams({"inner_attack/name": inner_attack.__class__.__name__})
-        self.logger.register_hparams({"attack/skip_already_fooled": skip_already_fooled})
-        self.logger.register_hparams({"attack/skip_failed_attacks": skip_failed_attacks})
+        self.metric_logger.report_hparams("activ_extractor", activ_extractor.get_hparams())
+        self.metric_logger.report_hparams(
+            "inner_attack",
+            inner_attack.__dict__,
+            name=inner_attack.__class__.__name__,
+        )
+        self.metric_logger.report_hparams(
+            "attack",
+            skip_already_fooled=skip_already_fooled,
+            skip_failed_attacks=skip_failed_attacks,
+        )
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor | None:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor | None:
         x_batch, y_batch = data
 
         with self.extractor.capture():

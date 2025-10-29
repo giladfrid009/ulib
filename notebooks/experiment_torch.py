@@ -5,7 +5,8 @@ from collections import OrderedDict
 
 from notebooks.datasets import load_imagenet
 from notebooks.experiment_utils import patch_class_name
-from ulib import utils, eval
+from ulib.utils.torch import clear_memory, get_device
+from ulib import eval
 from ulib.data import TensorLoader
 
 
@@ -15,8 +16,8 @@ def load_torchvision_experiment(
     silent: bool = False,
     **model_kwargs,
 ) -> tuple[nn.Module, TensorLoader, TensorLoader]:
-    utils.clear_memory()
-    device = utils.get_device()
+    clear_memory()
+    device = get_device()
 
     weights_enum = models.get_model_weights(model_type)
     weights: models.Weights = weights_enum.DEFAULT

@@ -2,9 +2,8 @@ import torch
 from torch import nn
 from tqdm.auto import tqdm
 from typing import Callable
-from ulib import utils
 from ulib.data.tensor_loader import TensorLoader
-
+from ulib.utils.torch import extract_device
 
 class DataExtractor:
     """
@@ -20,7 +19,7 @@ class DataExtractor:
             model (nn.Module): PyTorch model for predictions.
         """
         self.model = model.eval()
-        self.device = utils.extract_device(model)
+        self.device = extract_device(model)
 
     def _validate_loader(self, loader: TensorLoader) -> None:
         """Validate that loader has at least two tensors (inputs + target)."""

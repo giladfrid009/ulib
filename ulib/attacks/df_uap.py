@@ -49,7 +49,13 @@ class DF_UAP(OptimAttack):
             **kwargs,
         )
 
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor:
         x_batch, y_batch = data
         preds = self.pert_model(x_batch)
         loss = self.criterion(preds, y_batch)

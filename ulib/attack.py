@@ -5,9 +5,14 @@ import pathlib
 import time
 from typing import Iterable, Callable
 
-from ulib.logger import Logger
-from ulib import utils, eval
+from ulib.utils.torch import extract_device
+from ulib.metric_logger import MetricLogger
+from ulib import eval
 from ulib.pert_module import PertModule
+from ulib.utils.logging import create_logger
+
+
+logger = create_logger(__name__)
 
 
 class StopCriteria:
@@ -62,12 +67,12 @@ class StopCriteria:
 
     def get_hparams(self) -> dict:
         return {
-            "stop/max_epochs": self.max_epochs,
-            "stop/max_evals": self.max_evals,
-            "stop/max_time": self.max_time,
-            "stop/target_value": self.target_value,
-            "stop/patience": self.patience,
-            "stop/patience_delta": self.patience_delta,
+            "max_epochs": self.max_epochs,
+            "max_evals": self.max_evals,
+            "max_time": self.max_time,
+            "target_value": self.target_value,
+            "patience": self.patience,
+            "patience_delta": self.patience_delta,
         }
 
     def reset(self) -> None:
@@ -153,7 +158,7 @@ class UnivAttack(ABC):
         self.eval_on_batch = eval_on_batch
         self.metric_name = metric_name
         self.metric_func = metric_func
-        self.device = utils.extract_device(pert_model)
+        self.device = extract_device(pert_model)
 
         # Stats
         self.init_metric = -float("inf")
@@ -161,32 +166,46 @@ class UnivAttack(ABC):
         self.best_pert = pert_model.get_pert()
 
         # Logging
-        self.logger = Logger(log_dir)
-        self.logger.register_hparams(
-            {
-                "model/name": self.orig_model.__class__.__name__,
-                "model/device": self.device.type,
-                "attack/name": self.__class__.__name__,
-                "attack/targeted": self.targeted,
-                "attack/eval_freq": self.eval_freq,
-                "attack/eval_on_batch": self.eval_on_batch,
-                "attack/metric_name": self.metric_name,
-                "attack/metric_func": self.metric_func.__name__,
-            }
+        self.metric_logger = MetricLogger(
+            self.orig_model.__class__.__name__,
+            self.__class__.__name__,
+            f"L{self.pert_model.norm}",
+            f"Eps_{self.pert_model.eps:.4f}",
+            project="CLF-IML",
+            root_dir="logs",
+            disabled=log_dir is None,  # TODO: fix log_dir arg afterwards
         )
-        self.logger.register_hparams(self.pert_model.get_hparams())
+
+        self.metric_logger.report_hparams(
+            "model",
+            name=self.orig_model.__class__.__name__,
+            device=self.device.type,
+        )
+
+        self.metric_logger.report_hparams(
+            "attack",
+            targeted=targeted,
+            eval_freq=eval_freq,
+            eval_on_batch=eval_on_batch,
+            metric_name=metric_name,
+            metric_func=metric_func.__name__,
+        )
+
+        self.metric_logger.report_hparams("part", self.pert_model.get_hparams())
 
     def close(self):
         """Close all resources."""
-        self.logger.close()
+        self.metric_logger.close()
 
     def __del__(self):
         self.close()
 
     def save_checkpoint(self, file_name: str = "best_pert.pt"):
-        log_dir = self.logger.log_dir()
-        if log_dir is not None:
-            torch.save(self.best_pert, pathlib.Path(log_dir) / file_name)
+        if self.metric_logger.log_dir is None:
+            logger.warning("Log dir is None, cannot save checkpoint.")
+            return
+
+        torch.save(self.best_pert, pathlib.Path(self.metric_logger.log_dir) / file_name)
 
     def to_device(self, *data: torch.Tensor, device: str | torch.device | None = None) -> tuple[torch.Tensor, ...]:
         """
@@ -246,22 +265,13 @@ class UnivAttack(ABC):
         stop_criteria.reset()
 
         # Init Logging
-        self.logger.register_hparams(stop_criteria.get_hparams())
-        self.logger.initialize(
-            self.orig_model.__class__.__name__,
-            self.__class__.__name__,
-            f"L{self.pert_model.norm}",
-            f"Eps_{self.pert_model.eps:.4f}",
-        )
-        self.logger.add_tags(
+        self.metric_logger.report_hparams("stop_criteria", stop_criteria.get_hparams())
+
+        self.metric_logger.set_tags(
             model=self.orig_model.__class__.__name__,
             attack=self.__class__.__name__,
             norm=self.pert_model.norm,
             eps=f"{self.pert_model.eps:4f}",
-        )
-        self.logger.log_hparams()
-        self.logger.add_graph(
-            self.orig_model, torch.rand(self.pert_model.shape, device=self.device, dtype=self.pert_model.dtype)
         )
 
         # Init Stats
@@ -269,8 +279,8 @@ class UnivAttack(ABC):
         self.best_metric = self.init_metric
         self.best_pert = self.pert_model.get_pert()
 
-        self.logger.log_scalar(f"{self.metric_name}/current", self.init_metric, step=-1)
-        self.logger.log_scalar(f"{self.metric_name}/best", self.best_metric, step=-1)
+        self.metric_logger.report_scalar(f"{self.metric_name}/current", self.init_metric, step=-1)
+        self.metric_logger.report_scalar(f"{self.metric_name}/best", self.best_metric, step=-1)
 
         loss = None
         current_metric = self.init_metric
@@ -278,14 +288,11 @@ class UnivAttack(ABC):
         global_step = 0
 
         self.pert_model.train()
-        self.on_training_start()
 
         epoch_pbar = tqdm(range(stop_criteria.max_epochs), desc="Epochs")
         for epoch_num in epoch_pbar:
             if should_stop:
                 break
-
-            self.on_epoch_start(dl_train, epoch_num)
 
             batch_pbar = tqdm(dl_train, desc="Batches", leave=False)
             for batch_num, data in enumerate(batch_pbar):
@@ -293,10 +300,8 @@ class UnivAttack(ABC):
                     break
 
                 data = self.to_device(*data)
-                self.on_batch_start(data, batch_num=batch_num, epoch_num=epoch_num)
-                loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num)
-                self.on_batch_end(data, batch_num=batch_num, epoch_num=epoch_num)
-                self.logger.log_scalar("loss/current", loss)
+                loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num, step_num=global_step)
+                self.metric_logger.report_scalar("loss/current", loss, global_step)
 
                 # Evaluate on batch if enabled
                 if self.eval_on_batch and (global_step % self.eval_freq == 0):
@@ -305,9 +310,9 @@ class UnivAttack(ABC):
                     should_stop = stop_criteria.should_stop()
 
                     self.save_checkpoint()
-                    self.logger.log_scalar(f"{self.metric_name}/best", self.best_metric)
-                    self.logger.log_scalar(f"{self.metric_name}/current", current_metric)
-                    self.logger.log_image("pert/current", self.pert_model.to_image())
+                    self.metric_logger.report_scalar(f"{self.metric_name}/best", self.best_metric, global_step)
+                    self.metric_logger.report_scalar(f"{self.metric_name}/current", current_metric, global_step)
+                    self.metric_logger.report_image("pert/current", self.pert_model.to_image(), global_step)
 
                 batch_pbar.set_postfix(
                     {
@@ -318,7 +323,6 @@ class UnivAttack(ABC):
                     }
                 )
 
-                self.logger.step()
                 global_step += 1
 
             batch_pbar.close()
@@ -330,9 +334,9 @@ class UnivAttack(ABC):
                 should_stop = stop_criteria.should_stop()
 
                 self.save_checkpoint()
-                self.logger.log_scalar(f"{self.metric_name}/best", self.best_metric, step=epoch_num)
-                self.logger.log_scalar(f"{self.metric_name}/current", current_metric, step=epoch_num)
-                self.logger.log_image("pert/current", self.pert_model.to_image(), step=epoch_num)
+                self.metric_logger.report_scalar(f"{self.metric_name}/best", self.best_metric, global_step)
+                self.metric_logger.report_scalar(f"{self.metric_name}/current", current_metric, global_step)
+                self.metric_logger.report_image("pert/current", self.pert_model.to_image(), global_step)
 
             epoch_pbar.set_postfix(
                 {
@@ -343,9 +347,6 @@ class UnivAttack(ABC):
                 }
             )
 
-            self.on_epoch_end(epoch_num)
-
-        self.on_training_end()
         epoch_pbar.close()
 
         # Update to best pert
@@ -353,66 +354,19 @@ class UnivAttack(ABC):
 
         # Final evaluation
         metrics = eval.full_analysis(self.pert_model, dl_eval, silent=False)
-        self.logger.log_metrics(metrics)
+        self.metric_logger.report_globals(metrics)
 
         self.close()
         return self.pert_model.get_pert()
 
-    def on_training_start(self):
-        """
-        Hook called at the start of training.
-        """
-        pass
-
-    def on_training_end(self):
-        """
-        Hook called at the end of training.
-        """
-        pass
-
-    def on_batch_start(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int):
-        """
-        Hook called at the start of each batch.
-
-        Args:
-            data (tuple[torch.Tensor, ...]): Batch data, already moved to the device.
-            batch_num (int): Current batch number.
-            epoch_num (int): Current epoch number.
-        """
-        pass
-
-    def on_batch_end(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int):
-        """
-        Hook called at the end of each batch.
-
-        Args:
-            data (tuple[torch.Tensor, ...]): Batch data, already moved to the device.
-            batch_num (int): Current batch number.
-            epoch_num (int): Current epoch number.
-        """
-        pass
-
-    def on_epoch_start(self, dl_train: Iterable[tuple[torch.Tensor, ...]], epoch_num: int):
-        """
-        Hook called at the start of each epoch.
-
-        Args:
-            dl_train (Iterable[tuple[torch.Tensor, ...]]): Training data loader.
-            epoch_num (int): Current epoch number.
-        """
-        pass
-
-    def on_epoch_end(self, epoch_num: int):
-        """
-        Hook called at the end of each epoch.
-
-        Args:
-            epoch_num (int): Epoch number that just ended.
-        """
-        pass
-
     @abstractmethod
-    def process_batch(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> float | None:
+    def process_batch(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> float | None:
         """
         Runs a single training step on the given batch of data.
 
@@ -420,6 +374,7 @@ class UnivAttack(ABC):
             data (tuple[torch.Tensor, ...]): Batch data, already moved to the device.
             batch_num (int): Current batch number.
             epoch_num (int): Current epoch number.
+            step_num (int): Current global step number.
 
         Returns:
             float: Computed loss value for the batch, or None if invalid.
@@ -480,17 +435,26 @@ class OptimAttack(UnivAttack):
         self.grad_scaler = grad_scaler
         self.autocast = autocast
 
-        self.logger.register_hparams({f"optim/{k}": v for k, v in self.optimizer.param_groups[0].items()})
-        self.logger.register_hparams({"optim/name": self.optimizer.__class__.__name__})
-        self.logger.register_hparams({f"criterion/{k}": v for k, v in self.criterion.__dict__.items()})
-        self.logger.register_hparams({"criterion/name": self.criterion.__class__.__name__})
+        self.metric_logger.report_hparams(
+            "optim",
+            self.optimizer.param_groups[0],
+            name=self.optimizer.__class__.__name__,
+        )
+        self.metric_logger.report_hparams(
+            "criterion",
+            self.criterion.__dict__,
+            name=self.criterion.__class__.__name__,
+        )
         if self.scheduler is not None:
-            self.logger.register_hparams({f"scheduler/{k}": v for k, v in self.scheduler.state_dict().items()})
-            self.logger.register_hparams({"scheduler/name": self.scheduler.__class__.__name__})
+            self.metric_logger.report_hparams(
+                "scheduler",
+                self.scheduler.state_dict(),
+                name=self.scheduler.__class__.__name__,
+            )
         if self.grad_scaler is not None:
-            self.logger.register_hparams({f"grad_scaler/{k}": v for k, v in self.grad_scaler.state_dict().items()})
+            self.metric_logger.report_hparams("grad_scaler", self.grad_scaler.state_dict())
         if self.autocast is not None:
-            self.logger.register_hparams({f"autocast/{k}": v for k, v in self.autocast.__dict__.items()})
+            self.metric_logger.report_hparams("autocast", self.autocast.__dict__)
 
     def autocast_context(self, enabled: bool = True) -> torch.autocast:
         """
@@ -510,7 +474,13 @@ class OptimAttack(UnivAttack):
             return torch.autocast(device_type=self.autocast.device, enabled=False)
 
     @abstractmethod
-    def compute_loss(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> torch.Tensor | None:
+    def compute_loss(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> torch.Tensor | None:
         """
         Computes the loss on the given batch of data.
         The computed loss must be a scalar tensor that allows gradients to be backpropagated.
@@ -519,17 +489,24 @@ class OptimAttack(UnivAttack):
             data (tuple[torch.Tensor, ...]): Batch data, already moved to the device.
             batch_num (int): Current batch number.
             epoch_num (int): Current epoch number.
+            step_num (int): Current global step number.
 
         Returns:
             torch.Tensor: Loss tensor, or None if invalid.
         """
         raise NotImplementedError()
 
-    def process_batch(self, data: tuple[torch.Tensor, ...], batch_num: int, epoch_num: int) -> float | None:
+    def process_batch(
+        self,
+        data: tuple[torch.Tensor, ...],
+        batch_num: int,
+        epoch_num: int,
+        step_num: int,
+    ) -> float | None:
         self.optimizer.zero_grad()
 
         with self.autocast_context():
-            loss = self.compute_loss(data, batch_num, epoch_num)
+            loss = self.compute_loss(data, batch_num, epoch_num, step_num)
 
         if loss is not None:
             if self.grad_scaler is not None:
@@ -542,7 +519,7 @@ class OptimAttack(UnivAttack):
 
         # Update learning rate scheduler if enabled.
         if self.scheduler is not None and (self.sched_on_batch or batch_num == 0):
-            self.logger.log_scalar("lr", self.scheduler.get_last_lr()[0])
+            self.metric_logger.report_scalar("lr", self.scheduler.get_last_lr()[0], step_num)
             self.scheduler.step()
 
         return None if loss is None else loss.item()
