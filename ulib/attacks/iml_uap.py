@@ -1,5 +1,7 @@
+from typing import Callable
 import torch
-import torchattacks.attack
+from torchattacks.attack import Attack as TorchAttack
+import inspect
 from ulib.attack import OptimAttack
 from ulib.pert_module import PertModule
 from ulib.activation_extractor import ActivationExtractor, ActivationLoss
@@ -36,7 +38,7 @@ class IML_UAP(OptimAttack):
         optimizer: torch.optim.Optimizer,
         criterion: ActivationLoss,
         activ_extractor: ActivationExtractor,
-        inner_attack: torchattacks.attack.Attack,
+        inner_attack: TorchAttack | Callable[[torch.nn.Module, int], TorchAttack],
         skip_already_fooled: bool = True,
         skip_failed_attacks: bool = True,
         **kwargs,
@@ -48,25 +50,40 @@ class IML_UAP(OptimAttack):
             **kwargs,
         )
 
-        self.inner_attack = inner_attack
+        if isinstance(inner_attack, TorchAttack):
+            self.attack_builder_func = None
+            self.inner_attack = inner_attack
+        else:
+            self.attack_builder_func = inner_attack
+            self.inner_attack = self.attack_builder_func(self.orig_model, 0)
+
+        self.inner_attack = self.make_attack(0)
         self.extractor = activ_extractor
         self.skip_already_fooled = skip_already_fooled
         self.skip_failed_attacks = skip_failed_attacks
 
-        if self.targeted:
-            self.inner_attack.set_mode_targeted_by_function(lambda inp, lbl: lbl)
-
         self.metric_logger.report_hparams("activ_extractor", activ_extractor.get_hparams())
         self.metric_logger.report_hparams(
             "inner_attack",
-            inner_attack.__dict__,
-            name=inner_attack.__class__.__name__,
+            self.inner_attack.__dict__,
+            name=self.inner_attack.__class__.__name__,
         )
         self.metric_logger.report_hparams(
             "attack",
+            inner_attack=self.inner_attack.__class__.__name__,
+            attack_builder=inspect.getsource(self.attack_builder_func) if self.attack_builder_func else None,
             skip_already_fooled=skip_already_fooled,
             skip_failed_attacks=skip_failed_attacks,
         )
+
+    def make_attack(self, epoch_num: int) -> TorchAttack:
+        if self.attack_builder_func is None:
+            inner_attack = self.inner_attack
+        else:
+            inner_attack = self.attack_builder_func(self.orig_model, epoch_num)
+        if self.targeted:
+            inner_attack.set_mode_targeted_by_function(lambda inp, lbl: lbl)
+        return inner_attack
 
     def compute_loss(
         self,
@@ -75,6 +92,9 @@ class IML_UAP(OptimAttack):
         epoch_num: int,
         step_num: int,
     ) -> torch.Tensor | None:
+        if batch_num == 0:  # on epoch start
+            self.inner_attack = self.make_attack(epoch_num)
+
         x_batch, y_batch = data
 
         with self.extractor.capture():
