@@ -212,9 +212,10 @@ class PertModule(nn.Module):
     def to_image(self) -> torch.Tensor:
         """
         Convert the current perturbation into an image format for visualization.
+        The resulting image is an RGB tensor with values in the range [0, 255]
 
         Returns:
-            torch.Tensor: Normalized image tensor with values in the range [0, 1].
+            torch.Tensor: Normalized image tensor with values in the range [0, 255].
         """
         pert = self.project(self._pert).detach().cpu()
         pert = pert.view(*self.data_shape)
@@ -222,4 +223,5 @@ class PertModule(nn.Module):
         pert = pert / self.eps
         pert = torch.clamp(pert, -1, 1)
         pert = pert / 2 + 0.5
-        return torch.clamp(pert, 0, 1)
+        pert = torch.clamp(pert, 0, 1)
+        return (pert * 255).to(torch.uint8)

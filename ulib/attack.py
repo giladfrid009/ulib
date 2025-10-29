@@ -171,6 +171,7 @@ class UnivAttack(ABC):
             self.__class__.__name__,
             f"L{self.pert_model.norm}",
             f"Eps_{self.pert_model.eps:.4f}",
+            time.strftime("%Y-%m-%d_%H-%M-%S"),
             project="CLF-IML",
             root_dir="logs",
             disabled=not logging_enable,
