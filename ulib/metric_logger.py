@@ -186,18 +186,23 @@ class MetricLogger:
         cm_logger = self.cm_task.get_logger()
         cm_logger.report_scalar(title=title, series=series, value=float(value), iteration=step)
 
-    def report_image(self, tag: str, image: torch.Tensor | np.ndarray | PIL.Image.Image, step: int):
+    def report_image(self, tag: str, image: torch.Tensor | np.ndarray, step: int):
         """
         Logs an image.
 
         Args:
             tag (str): The name of the image.
-            image (torch.Tensor | np.ndarray | PIL.Image.Image): The image to log, RGB format.
+            image (torch.Tensor | np.ndarray): The image to log, RGB format. `image` shape should be (H, W, 3) 
+                - value range [0, 255] with uint8 dtype. 
+                - or value range [0, 1] with float dtype.
             step (int): The step number.
         """
         if self.cm_task is None or self.disabled:
             logger.debug("MetricLogger is disabled. Skipping.")
             return
+
+        if image.ndim != 3 or image.shape[2] != 3:
+            raise ValueError("Image must be a 3-dimensional array or tensor of format (H, W, C).")
 
         if "/" in tag:
             split = tag.split("/", maxsplit=1)
@@ -206,7 +211,6 @@ class MetricLogger:
             title = series = tag
 
         title = title.title()
-        series = series.title()
 
         if isinstance(image, torch.Tensor):
             image = image.numpy(force=True)

@@ -203,7 +203,6 @@ attack = USGD(
     grad_scaler=grad_scaler,
     eval_freq=1,
     targeted=False,
-    metric_func=eval.attack_success_ratio,
     logging_enable=True,
 )
 
@@ -247,7 +246,6 @@ print("UAP Generated!")
     ├── logger.py             # Experiment logging utilities
     ├── pert_module.py        # PertModule for model perturbations
     ├── activation_extractor.py # Extract activations from model layers
-    ├── eval.py               # Evaluation and analysis functions
     └── utils.py              # General utility functions
 ```
 
