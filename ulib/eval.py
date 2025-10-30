@@ -8,6 +8,10 @@ from tqdm.auto import tqdm
 
 from ulib.pert_module import PertModule
 from ulib.utils.torch import extract_device
+from ulib.utils.logging import create_logger
+
+
+logger = create_logger(__name__)
 
 
 def display_pert(pert_module: PertModule) -> AxesImage:
@@ -180,7 +184,7 @@ def full_analysis(
     }
 
     for metric, value in results.items():
-        print(f"{metric.replace('_', ' ').title():<25}: {value:.4f}")
+        logger.info(f"{metric.replace('_', ' ').title():<25}: {value:.4f}")
 
     display_pert(pert_module)
     plt.show()

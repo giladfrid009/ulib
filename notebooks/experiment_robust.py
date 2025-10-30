@@ -7,11 +7,15 @@ from robustbench.model_zoo.enums import ThreatModel, BenchmarkDataset
 from ulib import eval
 from ulib.utils.torch import clear_memory, get_device
 from ulib.data import TensorLoader
+from ulib.utils.logging import create_logger
 from notebooks.datasets import load_cifar10, load_cifar100, load_imagenet
 from notebooks.experiment_utils import patch_class_name
 
 import urllib.request
 import json
+
+
+logger = create_logger(__name__)
 
 
 class ModelInfo:
@@ -37,7 +41,7 @@ def get_info(model_name: str, dataset: str = "imagenet", norm: str = "Linf") -> 
             info = json.loads(response.read().decode("utf-8"))
             return ModelInfo(**info)
     except Exception as e:
-        print(f"Error loading model info: {e}")
+        logger.error(f"Error loading model info: {e}")
         return ModelInfo()
 
 

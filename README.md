@@ -76,9 +76,8 @@ Here is a simple code snippet demonstraing running a UAP attack. The attack here
 
 ```python
 import torch
-from ulib.pert_module import PertModule
+from ulib import PertModule, StopCriteria
 from ulib.attacks.cosine_uap import Cosine_UAP
-from ulib.attack import StopCriteria
 from notebooks.experiment_robust import load_robust_experiment
 
 # Load model and data loaders
