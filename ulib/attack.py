@@ -187,7 +187,7 @@ class UnivAttack(ABC):
         self.metric_logger.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step=-1)
 
         loss = None
-        current_metric = self.init_metric
+        main_metric = self.init_metric
         should_stop = False
         step = 0
 
@@ -225,7 +225,7 @@ class UnivAttack(ABC):
                         "loss": f"{loss:.4f}" if loss is not None else "None",
                         f"{self.judge_metric}_init": f"{self.init_metric:.4f}",
                         f"{self.judge_metric}_best": f"{self.best_metric:.4f}",
-                        f"{self.judge_metric}_curr": f"{current_metric:.4f}",
+                        f"{self.judge_metric}_curr": f"{main_metric:.4f}",
                     }
                 )
 
@@ -238,7 +238,7 @@ class UnivAttack(ABC):
                     "loss": f"{loss:.4f}" if loss is not None else "None",
                     f"{self.judge_metric}_init": f"{self.init_metric:.4f}",
                     f"{self.judge_metric}_best": f"{self.best_metric:.4f}",
-                    f"{self.judge_metric}_curr": f"{current_metric:.4f}",
+                    f"{self.judge_metric}_curr": f"{main_metric:.4f}",
                 }
             )
 
@@ -250,7 +250,9 @@ class UnivAttack(ABC):
         # Final evaluation
         extra_evaluator = ExtendedEvaluator(self.pert_model, verbose=True)
         metrics = extra_evaluator.evaluate(dl_eval)
+        metrics = {k: round(v, 4) for k, v in metrics.items()}
         self.metric_logger.report_globals(metrics)
+        self.metric_logger.report_image("pert/best", self.pert_model.to_image(), step)
 
         self.close()
         return self.pert_model.get_pert()
