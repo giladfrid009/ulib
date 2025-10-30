@@ -36,7 +36,7 @@ class GD_UAP(OptimAttack):
             raise ValueError("`sat_delta` must be in [0, 1]")
 
         criterion = ActivationLoss(
-            loss_fn=lambda v: -torch.log(torch.sum(torch.square(v) / 2, dim=1) + torch.finfo(v.dtype).eps)
+            loss_fn=lambda v: -torch.log(torch.sum(torch.square(v.flatten(1)) / 2, dim=1) + torch.finfo(v.dtype).eps)
         )
 
         super().__init__(

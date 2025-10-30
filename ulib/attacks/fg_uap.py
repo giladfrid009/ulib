@@ -22,7 +22,7 @@ class FG_UAP(OptimAttack):
         skip_already_fooled: bool = False,
         **kwargs,
     ):
-        criterion = ActivationLoss(loss_fn=lambda v1, v2: torch.cosine_similarity(v1, v2, dim=-1))
+        criterion = ActivationLoss(loss_fn=lambda v1, v2: torch.cosine_similarity(v1.flatten(1), v2.flatten(1), dim=-1))
 
         super().__init__(
             pert_model=pert_model,

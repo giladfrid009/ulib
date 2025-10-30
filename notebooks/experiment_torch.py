@@ -13,12 +13,14 @@ from ulib.data import TensorLoader
 def load_torchvision_experiment(
     model_type: str,
     batch_size: int = 256,
+    device: str | torch.device | None = None,
     silent: bool = False,
     **model_kwargs,
 ) -> tuple[nn.Module, TensorLoader, TensorLoader]:
-    clear_memory()
-    device = get_device()
+    if device is None:
+        device = get_device()
 
+    clear_memory()
     weights_enum = models.get_model_weights(model_type)
     weights: models.Weights = weights_enum.DEFAULT
     orig_model = models.get_model(name=model_type, weights=weights, progress=True, **model_kwargs)

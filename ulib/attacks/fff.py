@@ -25,7 +25,7 @@ class FFF(OptimAttack):
             raise ValueError("`divide_every` must be >= 0")
 
         criterion = ActivationLoss(
-            loss_fn=lambda v: -torch.log(torch.mean(torch.abs(v), dim=1) + torch.finfo(v.dtype).eps)
+            loss_fn=lambda v: -torch.log(torch.mean(torch.abs(v.flatten(1)), dim=1) + torch.finfo(v.dtype).eps)
         )
 
         super().__init__(

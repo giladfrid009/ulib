@@ -21,8 +21,7 @@ class UnivAttack(ABC):
         self,
         pert_model: PertModule,
         targeted: bool = False,
-        eval_freq: int = 1,
-        eval_on_batch: bool = False,
+        eval_freq: int | float = 1,
         metric_name: str = "metric",
         metric_func: Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float] | None = None,
         logging_enable: bool = False,
@@ -36,8 +35,9 @@ class UnivAttack(ABC):
         Args:
             pert_model (PertModule): A perturbation model used to generate adversarial examples.
             targeted (bool): Flag indicating if the attack is targeted or not.
-            eval_freq (int): Every how many steps to evaluate the model performance.
-            eval_on_batch (bool): If true, each batch is counted as step for evaluation, otherwise each epoch.
+            eval_freq (int | float): Frequency of evaluation during training.
+                - if int, evaluates every `eval_freq` epochs.
+                - if float, evaluates every `round(eval_freq * len(dl_train))` batches.
             metric_name (str): Name of the evaluation metric.
             metric_func (Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float], optional): Function to compute the evaluation metric.
             logging_enable (bool): If true, enables logging of metrics and hyperparameters.
@@ -52,7 +52,6 @@ class UnivAttack(ABC):
         self.orig_model = pert_model.model
         self.targeted = targeted
         self.eval_freq = eval_freq
-        self.eval_on_batch = eval_on_batch
         self.metric_name = metric_name
         self.metric_func = metric_func
         self.device = extract_device(pert_model)
@@ -84,7 +83,6 @@ class UnivAttack(ABC):
             "attack",
             targeted=targeted,
             eval_freq=eval_freq,
-            eval_on_batch=eval_on_batch,
             metric_name=metric_name,
             metric_func=metric_func.__name__,
         )
@@ -183,7 +181,7 @@ class UnivAttack(ABC):
         loss = None
         current_metric = self.init_metric
         should_stop = False
-        global_step = 0
+        step = 0
 
         self.pert_model.train()
 
@@ -198,19 +196,20 @@ class UnivAttack(ABC):
                     break
 
                 data = self.to_device(*data)
-                loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num, step_num=global_step)
-                self.metric_logger.report_scalar("loss/current", loss, global_step)
+                with torch.device(self.device):
+                    loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num, step_num=step)
+                stop_criteria.update(epoch_num, None)
+                self.metric_logger.report_scalar("loss/current", loss, step)
 
-                # Evaluate on batch if enabled
-                if self.eval_on_batch and (global_step % self.eval_freq == 0):
+                if should_stop or (step > 0 and step % round(self.eval_freq * len(dl_train)) == 0):                
                     current_metric = self.evaluate(dl_eval)
                     stop_criteria.update(epoch_num, current_metric)
                     should_stop = stop_criteria.should_stop()
 
                     self.save_checkpoint()
-                    self.metric_logger.report_scalar(f"{self.metric_name}/best", self.best_metric, global_step)
-                    self.metric_logger.report_scalar(f"{self.metric_name}/current", current_metric, global_step)
-                    self.metric_logger.report_image("pert/current", self.pert_model.to_image(), global_step)
+                    self.metric_logger.report_scalar(f"{self.metric_name}/best", self.best_metric, step)
+                    self.metric_logger.report_scalar(f"{self.metric_name}/current", current_metric, step)
+                    self.metric_logger.report_image("pert/current", self.pert_model.to_image(), step)
 
                 batch_pbar.set_postfix(
                     {
@@ -221,20 +220,9 @@ class UnivAttack(ABC):
                     }
                 )
 
-                global_step += 1
+                step += 1
 
-            batch_pbar.close()
-
-            # Evaluate on epoch if enabled
-            if not self.eval_on_batch and epoch_num % self.eval_freq == 0:
-                current_metric = self.evaluate(dl_eval)
-                stop_criteria.update(epoch_num, current_metric)
-                should_stop = stop_criteria.should_stop()
-
-                self.save_checkpoint()
-                self.metric_logger.report_scalar(f"{self.metric_name}/best", self.best_metric, global_step)
-                self.metric_logger.report_scalar(f"{self.metric_name}/current", current_metric, global_step)
-                self.metric_logger.report_image("pert/current", self.pert_model.to_image(), global_step)
+            batch_pbar.close()            
 
             epoch_pbar.set_postfix(
                 {
@@ -306,8 +294,9 @@ class OptimAttack(UnivAttack):
             grad_scaler (torch.GradScaler, optional): Gradient scaler for mixed precision.
             autocast (torch.autocast, optional): Autocast for mixed precision training.
             targeted (bool): Flag indicating if the attack is targeted or not.
-            eval_freq (int): Every how many steps to evaluate the model performance.
-            eval_on_batch (bool): If true, each batch is counted as step for evaluation, otherwise each epoch.
+            eval_freq (int | float): Frequency of evaluation during training.
+                - if int, evaluates every `eval_freq` epochs.
+                - if float, evaluates every `round(eval_freq * len(dl_train))` batches.
             metric_name (str): Name of the evaluation metric for display and logging.
             metric_func (Callable[[PertModule, Iterable[tuple[torch.Tensor, ...]]], float], optional): Function to compute the evaluation metric.
                 If None, uses `eval.misclassification_rate`.

@@ -73,16 +73,17 @@ class StopCriteria:
         self._best_value = -float("inf")
         self._patience_counter = 0
 
-    def update(self, epoch: int, value: float) -> None:
+    def update(self, epoch: int, value: float | None) -> None:
         """Update internal state with new metrics."""
         self._epoch = epoch
         self._total_evals += 1
 
-        if (value - self._best_value) >= self.patience_delta:
-            self._best_value = value
-            self._patience_counter = 0
-        else:
-            self._patience_counter += 1
+        if value is not None:
+            if (value - self._best_value) >= self.patience_delta:
+                self._best_value = value
+                self._patience_counter = 0
+            else:
+                self._patience_counter += 1
 
     def should_stop(self) -> bool:
         """Check if any stopping condition is met."""

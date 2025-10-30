@@ -8,27 +8,42 @@ from ulib.activation_extractor import ActivationExtractor, ActivationLoss
 
 
 class CosSim(ActivationLoss):
-    def __init__(self, reduction="sum-mean"):
+    def __init__(self, reduce_fn: Callable):
         super().__init__(
-            loss_fn=lambda v1, v2: 1.0 - torch.cosine_similarity(v1, v2, dim=-1),
-            reduction=reduction,
+            loss_fn=lambda v1, v2: 1.0 - torch.cosine_similarity(v1.flatten(1), v2.flatten(1), dim=-1),
+            reduction="none",
         )
+        self.reduce_fn = reduce_fn
+
+    def forward(self, *args, **kwargs) -> torch.Tensor:
+        loss = super().forward(*args, **kwargs)
+        return self.reduce_fn(loss)
 
 
 class L2Diff(ActivationLoss):
-    def __init__(self, reduction="sum-mean"):
+    def __init__(self, reduce_fn: Callable):
         super().__init__(
-            loss_fn=lambda v1, v2: torch.sum(torch.square(v1 - v2), dim=-1) / 2,
-            reduction=reduction,
+            loss_fn=lambda v1, v2: torch.sum(torch.square(v1.flatten(1) - v2.flatten(1)), dim=-1) / 2,
+            reduction="none",
         )
+        self.reduce_fn = reduce_fn
+
+    def forward(self, *args, **kwargs) -> torch.Tensor:
+        loss = super().forward(*args, **kwargs)
+        return self.reduce_fn(loss)
 
 
 class L1Diff(ActivationLoss):
-    def __init__(self, reduction="sum-mean"):
+    def __init__(self, reduce_fn: Callable):
         super().__init__(
-            loss_fn=lambda v1, v2: torch.sum(torch.abs(v1 - v2), dim=-1),
-            reduction=reduction,
+            loss_fn=lambda v1, v2: torch.sum(torch.abs(v1.flatten(1) - v2.flatten(1)), dim=-1),
+            reduction="none",
         )
+        self.reduce_fn = reduce_fn
+
+    def forward(self, *args, **kwargs) -> torch.Tensor:
+        loss = super().forward(*args, **kwargs)
+        return self.reduce_fn(loss)
 
 
 class IML_UAP(OptimAttack):
@@ -99,14 +114,20 @@ class IML_UAP(OptimAttack):
 
         with self.extractor.capture():
             # record forward pass activations
-            y_pred = self.pert_model(x_batch).argmax(dim=1)
+            y_pred = self.pert_model.forward(x_batch).argmax(dim=1)
             activ = self.extractor.get_activations()
 
             if self.skip_already_fooled:
                 # attack only non-fooled samples
                 cor_mask = y_pred == y_batch
+
+                not_fooled_ratio = cor_mask.float().mean().item()
+                self.metric_logger.report_scalar("IML/not_fooled_ratio", not_fooled_ratio, step_num)
+
                 if not cor_mask.any():
+                    self.metric_logger.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
                     return None
+
                 x_batch = x_batch[cor_mask]
                 y_batch = y_batch[cor_mask]
                 activ = {k: v[cor_mask] for k, v in activ.items()}
@@ -118,16 +139,28 @@ class IML_UAP(OptimAttack):
                 x_attk = self.inner_attack.forward(x_pert.detach(), y_batch)
 
             # record forward pass activations
+            # TODO: enable inference mode here?
             y_attk = self.orig_model(x_attk).argmax(dim=1)
             adv_act = self.extractor.get_activations()
 
             if self.skip_failed_attacks:
                 # use only successfully attacked samples
                 suc_mask = y_attk != y_batch
+
+                sample_asr = suc_mask.float().mean().item()
+                self.metric_logger.report_scalar("IML/sample_attack_success_ratio", sample_asr, step_num)
+
                 if not suc_mask.any():
+                    self.metric_logger.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
                     return None
+
                 activ = {k: v[suc_mask] for k, v in activ.items()}
                 adv_act = {k: v[suc_mask] for k, v in adv_act.items()}
+
+        num_remaining = list(activ.values())[0].size(0)
+        num_initial = data[0].size(0)
+        batch_ratio = num_remaining / num_initial
+        self.metric_logger.report_scalar("IML/effective_batch_ratio", batch_ratio, step_num)
 
         loss = self.criterion(activ, adv_act)
         return loss

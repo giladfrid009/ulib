@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 from robustbench.utils import load_model as robust_load_model
@@ -50,6 +51,7 @@ def load_robust_experiment(
     dataset: str,
     norm: str = "Linf",
     batch_size: int = 256,
+    device: str | torch.device | None = None,
     silent: bool = False,
 ) -> tuple[nn.Module, TensorLoader, TensorLoader]:
     dataset = dataset.lower()
@@ -57,8 +59,10 @@ def load_robust_experiment(
     assert dataset in ["cifar10", "cifar100", "imagenet"], f"Unknown dataset: {dataset}"
     assert norm in ["Linf", "L2"], f"Unknown norm: {norm}"
 
+    if device is None:
+        device = get_device()
+        
     clear_memory()
-    device = get_device()
     ds_enum = BenchmarkDataset(dataset)
     norm_emum = ThreatModel(norm)
 

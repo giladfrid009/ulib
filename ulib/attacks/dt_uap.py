@@ -9,7 +9,7 @@ class DTLoss(torch.nn.Module):
         super().__init__()
         self.gamma = gamma
         self.targeted = targeted
-        self.mse_loss = ActivationLoss(loss_fn=lambda v1, v2: torch.sum(torch.square(v1 - v2), dim=1) / 2)
+        self.mse_loss = ActivationLoss(loss_fn=lambda v1, v2: torch.sum(torch.square(v1.flatten(1) - v2.flatten(1)), dim=1) / 2)
         self.ce_loss = torch.nn.CrossEntropyLoss()
 
     def forward(
