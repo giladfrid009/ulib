@@ -22,8 +22,8 @@ class UnivAttack(ABC):
         pert_model: PertModule,
         targeted: bool = False,
         eval_freq: int | float = 1,
-        metric_evaluator: MetricEvaluator | None = None,
-        logging_enable: bool = False,
+        evaluator: MetricEvaluator | None = None,
+        metric_logger: MetricLogger | None = None,
     ):
         """
         Base class for universal adversarial attacks. This class provides a framework for generating
@@ -37,20 +37,21 @@ class UnivAttack(ABC):
             eval_freq (int | float): Frequency of evaluation during training.
                 - if int, evaluates every `eval_freq` epochs.
                 - if float, evaluates every `round(eval_freq * len(dl_train))` batches.
-            metric_evaluator (MetricEvaluator, optional): Evaluator to compute the evaluation metrics.
-            logging_enable (bool): If true, enables logging of metrics and hyperparameters.
+            evaluator (MetricEvaluator, optional): Evaluator to compute the evaluation metrics.
+            metric_logger (MetricLogger, optional): Logger for recording metrics and hyperparameters.
+                If None, a default logger will be created.
         """
         if eval_freq <= 0:
             raise ValueError("Evaluation frequency must be greater than 0.")
 
-        if metric_evaluator is None:
-            metric_evaluator = SimpleEvaluator(pert_model, main_metric="misclassification_rate", verbose=True)
+        if evaluator is None:
+            evaluator = SimpleEvaluator(pert_model, main_metric="misclassification_rate", verbose=True)
 
         self.pert_model = pert_model
         self.orig_model = pert_model.model
         self.targeted = targeted
         self.eval_freq = eval_freq
-        self.metric_evaluator = metric_evaluator
+        self.evaluator = evaluator
         self.device = extract_device(pert_model)
 
         # Stats
@@ -59,16 +60,14 @@ class UnivAttack(ABC):
         self.best_pert = pert_model.get_pert()
 
         # Logging
-        self.metric_logger = MetricLogger(
-            self.orig_model.__class__.__name__,
-            self.__class__.__name__,
-            f"L{self.pert_model.norm}",
-            f"Eps_{self.pert_model.eps:.4f}",
-            time.strftime("%Y-%m-%d_%H-%M-%S"),
-            project="CLF-IML",
-            root_dir="logs",
-            disabled=not logging_enable,
-        )
+        if metric_logger is None:
+            metric_logger = MetricLogger(
+                time.strftime("%Y-%m-%d_%H-%M-%S"),
+                project="CLF-IML",
+                root_dir="logs",
+            )
+
+        self.metric_logger = metric_logger
 
         self.metric_logger.report_hparams(
             "model",
@@ -80,20 +79,23 @@ class UnivAttack(ABC):
             "attack",
             targeted=targeted,
             eval_freq=eval_freq,
-            metric_name=metric_evaluator.name,
+            metric_name=evaluator.name,
         )
 
         self.metric_logger.report_hparams(
-            "metric_evaluator",
-            metric_evaluator.get_hparams(),
+            "evaluator",
+            evaluator.get_hparams(),
         )
 
-        self.metric_logger.report_hparams("part", self.pert_model.get_hparams())
+        self.metric_logger.report_hparams(
+            "part",
+            self.pert_model.get_hparams(),
+        )
 
     @property
     def judge_metric(self) -> str:
         """Returns the main metric name used for evaluation."""
-        return self.metric_evaluator.default_metric
+        return self.evaluator.default_metric
 
     def close(self):
         """Close all resources."""
@@ -134,7 +136,7 @@ class UnivAttack(ABC):
         Returns:
             dict[str, float]: A dictionary mapping metric names to their computed values.
         """
-        metrics = self.metric_evaluator.evaluate(dl_eval)
+        metrics = self.evaluator.evaluate(dl_eval)
         value = metrics[self.judge_metric]
         if value > self.best_metric:
             self.best_metric = value
@@ -167,22 +169,13 @@ class UnivAttack(ABC):
 
         stop_criteria.reset()
 
-        # Init Logging
-        self.metric_logger.report_hparams("stop_criteria", stop_criteria.get_hparams())
-
-        self.metric_logger.set_tags(
-            model=self.orig_model.__class__.__name__,
-            attack=self.__class__.__name__,
-            norm=self.pert_model.norm,
-            eps=f"{self.pert_model.eps:4f}",
-        )
-
         # Init Stats
-        metrics = self.metric_evaluator.evaluate(dl_eval)
+        metrics = self.evaluator.evaluate(dl_eval)
         self.init_metric = metrics[self.judge_metric]
         self.best_metric = self.init_metric
         self.best_pert = self.pert_model.get_pert()
 
+        self.metric_logger.report_hparams("stop_criteria", stop_criteria.get_hparams())
         self.metric_logger.report_scalars({f"metric/{k}": v for k, v in metrics.items()}, step=-1)
         self.metric_logger.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step=-1)
 
@@ -203,8 +196,8 @@ class UnivAttack(ABC):
                 if should_stop:
                     break
 
-                data = self.to_device(*data)
                 with torch.device(self.device):
+                    data = self.to_device(*data)
                     loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num, step_num=step)
                 stop_criteria.update(epoch_num, None)
                 self.metric_logger.report_scalar("loss/current", loss, step)
@@ -220,27 +213,11 @@ class UnivAttack(ABC):
                     self.metric_logger.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step)
                     self.metric_logger.report_image("pert/current", self.pert_model.to_image(), step)
 
-                batch_pbar.set_postfix(
-                    {
-                        "loss": f"{loss:.4f}" if loss is not None else "None",
-                        f"{self.judge_metric}_init": f"{self.init_metric:.4f}",
-                        f"{self.judge_metric}_best": f"{self.best_metric:.4f}",
-                        f"{self.judge_metric}_curr": f"{main_metric:.4f}",
-                    }
-                )
-
+                batch_pbar.set_postfix(metrics)
                 step += 1
 
             batch_pbar.close()
-
-            epoch_pbar.set_postfix(
-                {
-                    "loss": f"{loss:.4f}" if loss is not None else "None",
-                    f"{self.judge_metric}_init": f"{self.init_metric:.4f}",
-                    f"{self.judge_metric}_best": f"{self.best_metric:.4f}",
-                    f"{self.judge_metric}_curr": f"{main_metric:.4f}",
-                }
-            )
+            epoch_pbar.set_postfix(metrics)
 
         epoch_pbar.close()
 
@@ -309,8 +286,9 @@ class OptimAttack(UnivAttack):
             eval_freq (int | float): Frequency of evaluation during training.
                 - if int, evaluates every `eval_freq` epochs.
                 - if float, evaluates every `round(eval_freq * len(dl_train))` batches.
-            metric_evaluator (MetricEvaluator, optional): Evaluator to compute the evaluation metrics.
-            logging_enable (bool): If true, enables logging of metrics and hyperparameters.
+            evaluator (MetricEvaluator, optional): Evaluator to compute the evaluation metrics.
+            metric_logger (MetricLogger, optional): Logger for recording metrics and hyperparameters.
+                If None, a default logger will be created.
             **kwargs: Additional arguments passed to the `UnivAttack` constructor.
         """
         super().__init__(

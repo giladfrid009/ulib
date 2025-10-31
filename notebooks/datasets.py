@@ -4,7 +4,8 @@ from ulib.data import TensorLoader, PartialImageFolder
 
 
 def load_cifar10(
-    transform: Callable = transforms.ToTensor(), batch_size: int = 256
+    transform: Callable = transforms.ToTensor(),
+    batch_size: int = 256,
 ) -> tuple[TensorLoader, TensorLoader]:
     ds_train = datasets.CIFAR10(root="/datasets", train=True, download=False, transform=transform)
     ds_eval = datasets.CIFAR10(root="/datasets", train=False, download=False, transform=transform)
@@ -14,7 +15,8 @@ def load_cifar10(
 
 
 def load_cifar100(
-    transform: Callable = transforms.ToTensor(), batch_size: int = 256
+    transform: Callable = transforms.ToTensor(),
+    batch_size: int = 256,
 ) -> tuple[TensorLoader, TensorLoader]:
     ds_train = datasets.CIFAR100(root="/datasets", train=True, download=False, transform=transform)
     ds_eval = datasets.CIFAR100(root="/datasets", train=False, download=False, transform=transform)
@@ -23,7 +25,10 @@ def load_cifar100(
     return dl_train, dl_eval
 
 
-def load_imagenet(transform: Callable, batch_size: int = 256) -> tuple[TensorLoader, TensorLoader]:
+def load_imagenet(
+    transform: Callable,
+    batch_size: int = 256,
+) -> tuple[TensorLoader, TensorLoader]:
     ds_train = PartialImageFolder(root="/datasets/ImageNet/train", size=10000, allow_empty=False, transform=transform)
     ds_eval = PartialImageFolder(root="/datasets/ImageNet/val", size=10000, allow_empty=False, transform=transform)
     dl_train = TensorLoader.from_dataset(

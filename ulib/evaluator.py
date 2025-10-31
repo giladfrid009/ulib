@@ -113,11 +113,11 @@ class SimpleEvaluator(MetricEvaluator):
 
     @property
     def metric_names(self) -> list[str]:
-        return ["accuracy", "misclassification_rate"]
+        return ["ACC", "MR"]
 
     @property
     def default_metric(self) -> str:
-        return self.main_metric or "misclassification_rate"
+        return self.main_metric or "MR"
 
     def eval_batch(self, data: tuple[torch.Tensor, ...]) -> dict[str, torch.Tensor]:
         x, y = data
@@ -127,8 +127,8 @@ class SimpleEvaluator(MetricEvaluator):
         incorrect = ~correct
 
         return {
-            "accuracy": correct.to(torch.float32),
-            "misclassification_rate": incorrect.to(torch.float32),
+            "ACC": correct.to(torch.float32),  # accuracy
+            "MR": incorrect.to(torch.float32),  # misclassification rate
         }
 
 
@@ -144,17 +144,17 @@ class ExtendedEvaluator(MetricEvaluator):
     @property
     def metric_names(self) -> list[str]:
         return [
-            "fooling_rate",
-            "attack_success_rate",
-            "clean_accuracy",
-            "robust_accuracy",
-            "clean_misclassification_rate",
-            "robust_misclassification_rate",
+            "FR",  # fooling rate
+            "ASR",  # attack success rate
+            "C-ACC",  # clean accuracy
+            "R-ACC",  # robust accuracy
+            "C-MR",  # clean misclassification rate
+            "R-MR",  # robust misclassification rate
         ]
 
     @property
     def default_metric(self) -> str:
-        return "attack_success_rate"
+        return "ASR"
 
     def eval_batch(self, data: tuple[torch.Tensor, ...]) -> dict[str, torch.Tensor]:
         x, y = data
@@ -169,18 +169,18 @@ class ExtendedEvaluator(MetricEvaluator):
         robust_incorrect = ~robust_correct
 
         return {
-            "fooling_rate": fooled.to(torch.float32),
-            "clean_accuracy": clean_correct.to(torch.float32),
-            "robust_accuracy": robust_correct.to(torch.float32),
-            "clean_misclassification_rate": clean_incorrect.to(torch.float32),
-            "robust_misclassification_rate": robust_incorrect.to(torch.float32),
+            "FR": fooled.to(torch.float32),
+            "C-ACC": clean_correct.to(torch.float32),
+            "R-ACC": robust_correct.to(torch.float32),
+            "C-MR": clean_incorrect.to(torch.float32),
+            "R-MR": robust_incorrect.to(torch.float32),
         }
 
     @torch.inference_mode()
     def evaluate(self, dl_eval: Iterable[tuple[torch.Tensor, ...]]) -> dict[str, float]:
         metrics = super().evaluate(dl_eval)
 
-        cac = metrics["clean_accuracy"]
-        rac = metrics["robust_accuracy"]
-        metrics["attack_success_rate"] = (cac - rac) / cac if cac > 0 else float("nan")
+        cac = metrics["C-ACC"]
+        rac = metrics["R-ACC"]
+        metrics["ASR"] = (cac - rac) / cac if cac > 0 else float("nan")
         return metrics
