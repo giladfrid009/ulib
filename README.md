@@ -149,9 +149,6 @@ stop = StopCriteria(max_epochs=10, max_time=60 * 10)
 # 6. Run the attack
 pert_tensor = attack.fit(dl_train, dl_eval, stop)
 
-# 7. Clean up
-attack.close()
-
 print("UAP Generated!")
 ```
 
@@ -212,8 +209,6 @@ stop = StopCriteria(max_epochs=10, max_time=60 * 10, patience=5, patience_delta=
 # 9. Run the attack
 pert_tensor = attack.fit(dl_train, dl_eval, stop)
 
-# 10. Clean up
-attack.close()
 
 print("UAP Generated!")
 ```
