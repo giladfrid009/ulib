@@ -97,13 +97,6 @@ class UnivAttack(ABC):
         """Returns the main metric name used for evaluation."""
         return self.evaluator.default_metric
 
-    def close(self):
-        """Close all resources."""
-        self.metric_logger.close()
-
-    def __del__(self):
-        self.close()
-
     def save_checkpoint(self, file_name: str = "best_pert.pt"):
         if self.metric_logger.log_dir is None:
             logger.warning("Log dir is None, cannot save checkpoint.")
@@ -231,7 +224,6 @@ class UnivAttack(ABC):
         self.metric_logger.report_globals(metrics)
         self.metric_logger.report_image("pert/best", self.pert_model.to_image(), step)
 
-        self.close()
         return self.pert_model.get_pert()
 
     @abstractmethod
