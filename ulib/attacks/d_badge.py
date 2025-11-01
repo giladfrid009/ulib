@@ -107,19 +107,15 @@ class D_BADGE(OptimAttack):
         loss = loss_neg - loss_pos
 
         # Scale loss if needed
-        if self.grad_scaler is not None:
-            loss = self.grad_scaler.scale(loss)
+        loss = self.grad_scaler.scale(loss)
 
         # Compute gradient
         grad = self.gamma * loss / vec
         pert.grad = grad
 
         # Update model
-        if self.grad_scaler is not None:
-            self.grad_scaler.step(self.optimizer)
-            self.grad_scaler.update()
-        else:
-            self.optimizer.step()
+        self.grad_scaler.step(self.optimizer)
+        self.grad_scaler.update()
 
         # Update learning rate scheduler if enabled.
         if self.scheduler is not None and (self.sched_on_batch or batch_num == 0):

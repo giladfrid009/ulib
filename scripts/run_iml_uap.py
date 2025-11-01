@@ -36,7 +36,6 @@ class IML_Experiment(Experiment):
         criterion = CosSim(reduce_fn=lambda losses: torch.prod(losses, dim=-1).mean())
         activ_extractor = ActivationExtractor(pert_model.model, "model.avgpool", exact_match=True)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optim, T_0=50, T_mult=1, eta_min=5e-5)
-        grad_scaler = torch.GradScaler(device=pert_model.device.type) if mixed_precision else None
 
         def attack_builder(model: torch.nn.Module, epoch: int) -> torchattacks.attack.Attack:
             eps = (pert_model.eps / args.max_epochs) * (epoch + 1)
@@ -50,9 +49,9 @@ class IML_Experiment(Experiment):
             optimizer=optim,
             criterion=criterion,
             # scheduler=scheduler,
-            grad_scaler=grad_scaler,
             eval_freq=eval_freq,
             evaluator=evaluator,
+            mixed_precision=mixed_precision,
             metric_logger=metric_logger,
             # attack specific args
             inner_attack=attack_builder,

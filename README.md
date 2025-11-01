@@ -184,9 +184,6 @@ criterion = torch.nn.CrossEntropyLoss()
 # 5. (Optional) Chooe LR scheduler
 scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=100, T_mult=1)
 
-# 6. (Optional) Use a grad-scaler for mixed precision
-grad_scaler = torch.GradScaler(device=pert_model.device.type)
-
 # 7. Initialize the attack with extended settings
 attack = USGD(
     # attack-specific params
@@ -197,10 +194,9 @@ attack = USGD(
     # general params
     scheduler=scheduler,
     sched_on_batch=True,
-    grad_scaler=grad_scaler,
-    eval_freq=1,
+    mixed_precision=True,
+    eval_freq=0.5,
     targeted=False,
-    logging_enable=True,
 )
 
 # 8. Define stopping criteria with patience

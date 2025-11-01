@@ -257,8 +257,7 @@ class OptimAttack(UnivAttack):
         criterion: torch.nn.Module,
         scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
         sched_on_batch: bool = False,
-        grad_scaler: torch.GradScaler | None = None,
-        autocast: torch.autocast | None = None,
+        mixed_precision: bool = False,
         **kwargs,
     ):
         """
@@ -272,8 +271,7 @@ class OptimAttack(UnivAttack):
             criterion (torch.nn.Module): Loss function for computing the training loss.
             scheduler (torch.optim.lr_scheduler.LRScheduler, optional): Learning rate scheduler.
             sched_on_batch (bool): If True, steps the scheduler on every batch, otherwise on every epoch.
-            grad_scaler (torch.GradScaler, optional): Gradient scaler for mixed precision.
-            autocast (torch.autocast, optional): Autocast for mixed precision training.
+            mixed_precision (bool): If True, uses mixed precision training.
             targeted (bool): Flag indicating if the attack is targeted or not.
             eval_freq (int | float): Frequency of evaluation during training.
                 - if int, evaluates every `eval_freq` epochs.
@@ -288,40 +286,42 @@ class OptimAttack(UnivAttack):
             **kwargs,
         )
 
-        if autocast is not None and grad_scaler is None:
-            raise ValueError("Grad scaler must be provided when using autocast.")
-
-        if autocast is None:
-            enabled = grad_scaler is not None and grad_scaler.is_enabled()
-            autocast = torch.autocast(device_type=self.device.type, enabled=enabled)
-
         self.optimizer = optimizer
         self.criterion = criterion
         self.scheduler = scheduler
         self.sched_on_batch = sched_on_batch
-        self.grad_scaler = grad_scaler
-        self.autocast = autocast
+        self.mixed_precision = mixed_precision
+        self.grad_scaler = torch.GradScaler(enabled=mixed_precision)
+        self.autocast = torch.autocast(device_type=self.device.type, enabled=mixed_precision)
 
         self.metric_logger.report_hparams(
             "optim",
             self.optimizer.param_groups[0],
             name=self.optimizer.__class__.__name__,
         )
+
         self.metric_logger.report_hparams(
             "criterion",
             self.criterion.__dict__,
             name=self.criterion.__class__.__name__,
         )
+
         if self.scheduler is not None:
             self.metric_logger.report_hparams(
                 "scheduler",
                 self.scheduler.state_dict(),
                 name=self.scheduler.__class__.__name__,
             )
-        if self.grad_scaler is not None:
-            self.metric_logger.report_hparams("grad_scaler", self.grad_scaler.state_dict())
-        if self.autocast is not None:
-            self.metric_logger.report_hparams("autocast", self.autocast.__dict__)
+
+        self.metric_logger.report_hparams(
+            "grad_scaler",
+            self.grad_scaler.state_dict(),
+        )
+
+        self.metric_logger.report_hparams(
+            "autocast",
+            self.autocast.__dict__,
+        )
 
     def autocast_context(self, enabled: bool = True) -> torch.autocast:
         """
