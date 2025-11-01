@@ -150,13 +150,13 @@ class UAPGD(UnivAttack):
         self.metric_logger.report_hparams(
             "inner_attack",
             inner_attack.__dict__,
-            name=inner_attack.__class__.__name__,
+            name=type(inner_attack).__name__,
         )
         if alpha_sched is not None:
             self.metric_logger.report_hparams(
                 "alpha_sched",
                 alpha_sched.scheduler.state_dict(),
-                name=alpha_sched.scheduler.__class__.__name__,
+                name=type(alpha_sched.scheduler).__name__,
             )
 
     @torch.no_grad()

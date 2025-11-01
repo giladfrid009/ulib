@@ -71,7 +71,7 @@ class UnivAttack(ABC):
 
         self.metric_logger.report_hparams(
             "model",
-            name=self.orig_model.__class__.__name__,
+            name=type(self.orig_model).__name__,
             device=self.device.type,
         )
 
@@ -295,33 +295,32 @@ class OptimAttack(UnivAttack):
         self.autocast = torch.autocast(device_type=self.device.type, enabled=mixed_precision)
 
         self.metric_logger.report_hparams(
+            "attack",
+            sched_on_batch=sched_on_batch,
+            mixed_precision=mixed_precision,
+        )
+        self.metric_logger.report_hparams(
             "optim",
             self.optimizer.param_groups[0],
-            name=self.optimizer.__class__.__name__,
+            name=type(self.optimizer).__name__,
         )
-
         self.metric_logger.report_hparams(
             "criterion",
             self.criterion.__dict__,
-            name=self.criterion.__class__.__name__,
+            name=type(self.criterion).__name__,
         )
-
-        if self.scheduler is not None:
-            self.metric_logger.report_hparams(
-                "scheduler",
-                self.scheduler.state_dict(),
-                name=self.scheduler.__class__.__name__,
-            )
-
         self.metric_logger.report_hparams(
             "grad_scaler",
             self.grad_scaler.state_dict(),
         )
-
         self.metric_logger.report_hparams(
             "autocast",
             self.autocast.__dict__,
         )
+        if self.scheduler is not None:
+            self.metric_logger.report_hparams(
+                "scheduler", self.scheduler.state_dict(), name=type(self.scheduler).__name__
+            )
 
     def autocast_context(self, enabled: bool = True) -> torch.autocast:
         """

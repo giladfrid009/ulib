@@ -77,7 +77,7 @@ def load_torchvision_model(
     model = model.eval().to(device)
     _patch_class_name(model, model_type)
 
-    logger.info(f"Model     : {orig_model.__class__.__name__}")
+    logger.info(f"Model     : {type(orig_model).__name__}")
     logger.info(f"Device    : {device}")
     logger.info(f"Weight    : {weights_enum.DEFAULT.name}")  # type: ignore
     logger.info(f"Metrics   : {weights.meta.get('_metrics', None)}")

@@ -81,11 +81,11 @@ class IML_UAP(OptimAttack):
         self.metric_logger.report_hparams(
             "inner_attack",
             self.inner_attack.__dict__,
-            name=self.inner_attack.__class__.__name__,
+            name=type(self.inner_attack).__name__,
         )
         self.metric_logger.report_hparams(
             "attack",
-            inner_attack=self.inner_attack.__class__.__name__,
+            inner_attack=type(self.inner_attack).__name__,
             attack_builder=inspect.getsource(self.attack_builder_func) if self.attack_builder_func else None,
             skip_already_fooled=skip_already_fooled,
             skip_failed_attacks=skip_failed_attacks,

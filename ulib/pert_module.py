@@ -75,7 +75,7 @@ class PertModule(nn.Module):
             dict[str, object]: Dictionary of hyperparameters.
         """
         return {
-            "name": self.__class__.__name__,
+            "name": type(self).__name__,
             "eps": self.eps,
             "norm": self.norm,
             "shape": str(self.shape),

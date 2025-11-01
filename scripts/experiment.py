@@ -272,8 +272,8 @@ class Experiment(ABC):
             )
 
             metric_logger.set_tags(
-                attack=univ_attack.__class__.__name__,
-                model=model.__class__.__name__,
+                attack=type(univ_attack).__name__,
+                model=type(model).__name__,
                 dataset=args.dataset,
                 norm=pert_model.norm,
                 eps=f"{args.epsilon}",

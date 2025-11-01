@@ -100,7 +100,7 @@ def load_robust_model(
     )
 
     model_info = robust_model_info(model_type, dataset, norm)
-    logger.info(f"Model        :  {model.__class__.__name__}")
+    logger.info(f"Model        :  {type(model).__name__}")
     logger.info(f"Device       : {device}")
     logger.info(f"RB Name      : {model_info.name}")
     logger.info(f"RB Arch      : {model_info.architecture}")

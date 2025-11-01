@@ -120,7 +120,7 @@ class AE_UAP(OptimAttack):
         self.metric_logger.report_hparams(
             "inner_attack",
             inner_attack.__dict__,
-            name=inner_attack.__class__.__name__,
+            name=type(inner_attack).__name__,
         )
 
     def compute_loss(

@@ -57,7 +57,7 @@ def load_torchvision_experiment(
         clean_train_acc = evaluator.evaluate(dl_train)["accuracy"]
         clean_eval_acc = evaluator.evaluate(dl_eval)["accuracy"]
 
-        print(f"Model     : {orig_model.__class__.__name__}")
+        print(f"Model     : {type(orig_model).__name__}")
         print(f"Device    : {device}")
         print(f"Eval Acc  : {round(clean_eval_acc * 100, 2)}")
         print(f"Train Acc : {round(clean_train_acc * 100, 2)}")
