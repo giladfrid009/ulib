@@ -27,7 +27,7 @@ class USGD(OptimAttack):
         )
 
         self.skip_already_fooled = skip_already_fooled
-        self.metric_logger.report_hparams("attack", skip_already_fooled=skip_already_fooled)
+        self.metric_tracker.report_hparams("attack", skip_already_fooled=skip_already_fooled)
 
     def compute_loss(
         self,

@@ -16,7 +16,7 @@ if str(module_dir) not in sys.path:
 from ulib.evaluator import MetricEvaluator
 from ulib.utils import env
 from ulib import PertModule, StopCriteria, UnivAttack
-from ulib.metric_logger import MetricLogger
+from ulib.utils.trackers import MetricTracker
 from ulib.utils.logging import create_logger, setup_logging, loglevel_names
 
 from scripts.utils.load_model import SUPPORTED_MODELS, load_model
@@ -221,7 +221,7 @@ class Experiment(ABC):
         evaluator: MetricEvaluator,
         eval_freq: float,
         mixed_precision: bool,
-        metric_logger: MetricLogger,
+        metric_tracker: MetricTracker,
     ) -> UnivAttack:
         pass
 
@@ -232,16 +232,17 @@ class Experiment(ABC):
             logger.error("No GPU available. Exiting.")
             sys.exit(1)
 
-        with MetricLogger(
+        with MetricTracker.create(
             args.model,
             args.dataset,
             f"L_{args.norm}",
             f"Eps_{args.epsilon}",
             args.run_name,
-            root_dir="logs",
+            kind="wandb",
             project="CLF-IML",
+            root_dir="logs",
             disabled=args.test_run,
-        ) as metric_logger:
+        ) as metric_tracker:
             logger.info(f"Loading model: {args.model}")
             model, ds_transform = load_model(args.model, args.dataset, device="cuda:0")
 
@@ -268,10 +269,10 @@ class Experiment(ABC):
                 evaluator=evaluator,
                 eval_freq=args.eval_freq,
                 mixed_precision=args.use_amp.lower() == "true",
-                metric_logger=metric_logger,
+                metric_tracker=metric_tracker,
             )
 
-            metric_logger.set_tags(
+            metric_tracker.set_tags(
                 attack=type(univ_attack).__name__,
                 model=type(model).__name__,
                 dataset=args.dataset,
@@ -280,9 +281,9 @@ class Experiment(ABC):
             )
 
             if main_file := getattr(sys.modules.get("__main__"), "__file__", None):
-                metric_logger.upload_code(main_file)
+                metric_tracker.upload_code(main_file)
             if expr_file := getattr(sys.modules.get(__name__), "__file__", None):
-                metric_logger.upload_code(expr_file)
+                metric_tracker.upload_code(expr_file)
 
             logger.info("Running attack...")
 
@@ -297,7 +298,7 @@ class Experiment(ABC):
 
             logger.info("Running test evaluation...")
             metrics = univ_attack.evaluate(dl_test)
-            metric_logger.report_globals(metrics)
+            metric_tracker.report_globals(metrics)
 
     def main(self):
         try:

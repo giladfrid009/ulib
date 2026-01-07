@@ -6,7 +6,7 @@ import time
 from typing import Iterable
 
 from ulib.utils.torch import extract_device
-from ulib.metric_logger import MetricLogger
+from ulib.utils.trackers import MetricTracker
 from ulib.evaluator import MetricEvaluator, SimpleEvaluator, ExtendedEvaluator
 from ulib.stop_criteria import StopCriteria
 from ulib.pert_module import PertModule
@@ -23,7 +23,7 @@ class UnivAttack(ABC):
         targeted: bool = False,
         eval_freq: int | float = 1,
         evaluator: MetricEvaluator | None = None,
-        metric_logger: MetricLogger | None = None,
+        metric_tracker: MetricTracker | None = None,
     ):
         """
         Base class for universal adversarial attacks. This class provides a framework for generating
@@ -38,7 +38,7 @@ class UnivAttack(ABC):
                 - if int, evaluates every `eval_freq` epochs.
                 - if float, evaluates every `round(eval_freq * len(dl_train))` batches.
             evaluator (MetricEvaluator, optional): Evaluator to compute the evaluation metrics.
-            metric_logger (MetricLogger, optional): Logger for recording metrics and hyperparameters.
+            metric_tracker (MetricTracker, optional): Logger for recording metrics and hyperparameters.
                 If None, a default logger will be created.
         """
         if eval_freq <= 0:
@@ -60,34 +60,35 @@ class UnivAttack(ABC):
         self.best_pert = pert_model.get_pert()
 
         # Logging
-        if metric_logger is None:
-            metric_logger = MetricLogger(
+        if metric_tracker is None:
+            metric_tracker = MetricTracker.create(
                 time.strftime("%Y-%m-%d_%H-%M-%S"),
+                kind="wandb",
                 project="CLF-IML",
                 root_dir="logs",
             )
 
-        self.metric_logger = metric_logger
+        self.metric_tracker = metric_tracker
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "model",
             name=type(self.orig_model).__name__,
             device=self.device.type,
         )
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "attack",
             targeted=targeted,
             eval_freq=eval_freq,
             metric_name=evaluator.name,
         )
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "evaluator",
             evaluator.get_hparams(),
         )
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "part",
             self.pert_model.get_hparams(),
         )
@@ -98,11 +99,11 @@ class UnivAttack(ABC):
         return self.evaluator.default_metric
 
     def save_checkpoint(self, file_name: str = "best_pert.pt"):
-        if self.metric_logger.log_dir is None:
+        if self.metric_tracker.log_dir is None:
             logger.warning("Log dir is None, cannot save checkpoint.")
             return
 
-        torch.save(self.best_pert, pathlib.Path(self.metric_logger.log_dir) / file_name)
+        torch.save(self.best_pert, pathlib.Path(self.metric_tracker.log_dir) / file_name)
 
     def to_device(self, *data: torch.Tensor, device: str | torch.device | None = None) -> tuple[torch.Tensor, ...]:
         """
@@ -168,9 +169,9 @@ class UnivAttack(ABC):
         self.best_metric = self.init_metric
         self.best_pert = self.pert_model.get_pert()
 
-        self.metric_logger.report_hparams("stop_criteria", stop_criteria.get_hparams())
-        self.metric_logger.report_scalars({f"metric/{k}": v for k, v in metrics.items()}, step=-1)
-        self.metric_logger.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step=-1)
+        self.metric_tracker.report_hparams("stop_criteria", stop_criteria.get_hparams())
+        self.metric_tracker.report_scalars({f"metric/{k}": v for k, v in metrics.items()}, step=-1)
+        self.metric_tracker.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step=-1)
 
         loss = None
         main_metric = self.init_metric
@@ -193,7 +194,7 @@ class UnivAttack(ABC):
                     data = self.to_device(*data)
                     loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num, step_num=step)
                 stop_criteria.update(epoch_num, None)
-                self.metric_logger.report_scalar("loss/current", loss, step)
+                self.metric_tracker.report_scalar("loss/current", loss, step)
 
                 if should_stop or (step > 0 and step % round(self.eval_freq * len(dl_train)) == 0):
                     metrics = self.evaluate(dl_eval)
@@ -202,9 +203,9 @@ class UnivAttack(ABC):
                     should_stop = stop_criteria.should_stop()
 
                     self.save_checkpoint()
-                    self.metric_logger.report_scalars({f"metric/{k}": v for k, v in metrics.items()}, step)
-                    self.metric_logger.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step)
-                    self.metric_logger.report_image("pert/current", self.pert_model.to_image(), step)
+                    self.metric_tracker.report_scalars({f"metric/{k}": v for k, v in metrics.items()}, step)
+                    self.metric_tracker.report_scalar(f"metric/{self.judge_metric}/best", self.best_metric, step)
+                    self.metric_tracker.report_image("pert/current", self.pert_model.to_image(), step)
 
                 batch_pbar.set_postfix(metrics)
                 step += 1
@@ -221,8 +222,8 @@ class UnivAttack(ABC):
         extra_evaluator = ExtendedEvaluator(self.pert_model, verbose=True)
         metrics = extra_evaluator.evaluate(dl_eval)
         metrics = {k: round(v, 4) for k, v in metrics.items()}
-        self.metric_logger.report_globals(metrics)
-        self.metric_logger.report_image("pert/best", self.pert_model.to_image(), step)
+        self.metric_tracker.report_globals(metrics)
+        self.metric_tracker.report_image("pert/best", self.pert_model.to_image(), step)
 
         return self.pert_model.get_pert()
 
@@ -277,7 +278,7 @@ class OptimAttack(UnivAttack):
                 - if int, evaluates every `eval_freq` epochs.
                 - if float, evaluates every `round(eval_freq * len(dl_train))` batches.
             evaluator (MetricEvaluator, optional): Evaluator to compute the evaluation metrics.
-            metric_logger (MetricLogger, optional): Logger for recording metrics and hyperparameters.
+            metric_tracker (MetricTracker, optional): Logger for recording metrics and hyperparameters.
                 If None, a default logger will be created.
             **kwargs: Additional arguments passed to the `UnivAttack` constructor.
         """
@@ -294,31 +295,31 @@ class OptimAttack(UnivAttack):
         self.grad_scaler = torch.GradScaler(enabled=mixed_precision)
         self.autocast = torch.autocast(device_type=self.device.type, enabled=mixed_precision)
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "attack",
             sched_on_batch=sched_on_batch,
             mixed_precision=mixed_precision,
         )
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "optim",
             self.optimizer.param_groups[0],
             name=type(self.optimizer).__name__,
         )
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "criterion",
             self.criterion.__dict__,
             name=type(self.criterion).__name__,
         )
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "grad_scaler",
             self.grad_scaler.state_dict(),
         )
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "autocast",
             self.autocast.__dict__,
         )
         if self.scheduler is not None:
-            self.metric_logger.report_hparams(
+            self.metric_tracker.report_hparams(
                 "scheduler", self.scheduler.state_dict(), name=type(self.scheduler).__name__
             )
 
@@ -385,7 +386,7 @@ class OptimAttack(UnivAttack):
 
         # Update learning rate scheduler if enabled.
         if self.scheduler is not None and (self.sched_on_batch or batch_num == 0):
-            self.metric_logger.report_scalar("lr", self.scheduler.get_last_lr()[0], step_num)
+            self.metric_tracker.report_scalar("lr", self.scheduler.get_last_lr()[0], step_num)
             self.scheduler.step()
 
         return None if loss is None else loss.item()

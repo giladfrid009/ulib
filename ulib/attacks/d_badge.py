@@ -56,7 +56,7 @@ class D_BADGE(OptimAttack):
         self.delta_decay = delta_decay
         self.gamma = gamma
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "attack",
             delta=delta,
             delta_decay=delta_decay,
@@ -119,7 +119,7 @@ class D_BADGE(OptimAttack):
 
         # Update learning rate scheduler if enabled.
         if self.scheduler is not None and (self.sched_on_batch or batch_num == 0):
-            self.metric_logger.report_scalar("lr", self.scheduler.get_last_lr()[0], step_num)
+            self.metric_tracker.report_scalar("lr", self.scheduler.get_last_lr()[0], step_num)
             self.scheduler.step()
 
         return pert.grad.norm().item()

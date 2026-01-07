@@ -19,7 +19,7 @@ class IML_Experiment(Experiment):
     def add_arguments(self, parser: ArgumentParser) -> None:
         pass
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_logger):
+    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=2e-2)
         criterion = CosSim(reduce_fn=lambda losses: torch.prod(losses, dim=-1).mean())
@@ -45,7 +45,7 @@ class IML_Experiment(Experiment):
             eval_freq=eval_freq,
             evaluator=evaluator,
             mixed_precision=mixed_precision,
-            metric_logger=metric_logger,
+            metric_tracker=metric_tracker,
         )
 
 

@@ -40,7 +40,7 @@ class DU_ATTACK(UnivAttack):
         self.beta = beta
         self.steps = steps
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "attack",
             alpha=alpha,
             beta=beta,

@@ -55,9 +55,9 @@ class GD_UAP(OptimAttack):
         self.prev_sat = 0.0
         self.curr_sat = 0.0
 
-        self.metric_logger.report_hparams("activ_extractor", self.extractor.get_hparams())
+        self.metric_tracker.report_hparams("activ_extractor", self.extractor.get_hparams())
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "attack",
             data_dependant=data_dependant,
             sat_thresh=sat_thresh,
@@ -78,7 +78,7 @@ class GD_UAP(OptimAttack):
         self.prev_sat = self.curr_sat
         pert = self.pert_model.get_pert(clone=False)
         self.curr_sat = self.saturation_rate(pert, self.pert_model.eps)
-        self.metric_logger.report_scalar("saturation", self.curr_sat, step_num)
+        self.metric_tracker.report_scalar("saturation", self.curr_sat, step_num)
 
         # Divide pert if saturation rate is too high
         if self.curr_sat > self.sat_thresh and abs(self.curr_sat - self.prev_sat) < self.sat_delta:

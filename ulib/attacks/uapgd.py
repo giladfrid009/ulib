@@ -146,14 +146,14 @@ class UAPGD(UnivAttack):
         self.alpha_sched = alpha_sched
         self.sched_on_batch = sched_on_batch
 
-        self.metric_logger.report_hparams("attack", sched_on_batch=sched_on_batch)
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams("attack", sched_on_batch=sched_on_batch)
+        self.metric_tracker.report_hparams(
             "inner_attack",
             inner_attack.__dict__,
             name=type(inner_attack).__name__,
         )
         if alpha_sched is not None:
-            self.metric_logger.report_hparams(
+            self.metric_tracker.report_hparams(
                 "alpha_sched",
                 alpha_sched.scheduler.state_dict(),
                 name=type(alpha_sched.scheduler).__name__,
@@ -173,7 +173,7 @@ class UAPGD(UnivAttack):
         elif self.alpha_sched is not None and self.sched_on_batch:
             self.inner_attack.alpha = self.alpha_sched.step()
 
-        self.metric_logger.report_scalar("inner_attack/alpha", self.inner_attack.alpha, step_num)
+        self.metric_tracker.report_scalar("inner_attack/alpha", self.inner_attack.alpha, step_num)
 
         x_batch, y_batch = data
 

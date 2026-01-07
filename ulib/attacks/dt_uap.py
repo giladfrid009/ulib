@@ -63,8 +63,8 @@ class DT_UAP(OptimAttack):
         self.alpha_step_size = alpha_step_size
         self.step_num = 0
 
-        self.metric_logger.report_hparams("activ_extractor", activ_extractor.get_hparams())
-        self.metric_logger.report_hparams("attack", alpha_step_size=alpha_step_size)
+        self.metric_tracker.report_hparams("activ_extractor", activ_extractor.get_hparams())
+        self.metric_tracker.report_hparams("attack", alpha_step_size=alpha_step_size)
 
     def get_alpha(self, step: int, step_size: float) -> float:
         return min(1.0, step * step_size)
@@ -77,7 +77,7 @@ class DT_UAP(OptimAttack):
         step_num: int,
     ) -> torch.Tensor:
         alpha = self.get_alpha(self.step_num, step_size=self.alpha_step_size)
-        self.metric_logger.report_scalar("alpha", alpha, step_num)
+        self.metric_tracker.report_scalar("alpha", alpha, step_num)
         self.step_num += 1
 
         x_batch, y_batch = data

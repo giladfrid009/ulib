@@ -117,7 +117,7 @@ class AE_UAP(OptimAttack):
         self.inner_attack = inner_attack
         self.inner_attack.set_criterion(self.criterion)
 
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "inner_attack",
             inner_attack.__dict__,
             name=type(inner_attack).__name__,

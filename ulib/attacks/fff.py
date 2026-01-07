@@ -38,8 +38,8 @@ class FFF(OptimAttack):
 
         self.divide_every = divide_every
         self.extractor = ActivationExtractor(pert_model.model, torch.nn.Conv2d)
-        self.metric_logger.report_hparams("activ_extractor", self.extractor.get_hparams())
-        self.metric_logger.report_hparams("attack", divide_every=divide_every)
+        self.metric_tracker.report_hparams("activ_extractor", self.extractor.get_hparams())
+        self.metric_tracker.report_hparams("attack", divide_every=divide_every)
 
     def compute_loss(
         self,

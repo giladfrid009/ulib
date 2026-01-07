@@ -77,13 +77,13 @@ class IML_UAP(OptimAttack):
         self.skip_already_fooled = skip_already_fooled
         self.skip_failed_attacks = skip_failed_attacks
 
-        self.metric_logger.report_hparams("activ_extractor", activ_extractor.get_hparams())
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams("activ_extractor", activ_extractor.get_hparams())
+        self.metric_tracker.report_hparams(
             "inner_attack",
             self.inner_attack.__dict__,
             name=type(self.inner_attack).__name__,
         )
-        self.metric_logger.report_hparams(
+        self.metric_tracker.report_hparams(
             "attack",
             inner_attack=type(self.inner_attack).__name__,
             attack_builder=inspect.getsource(self.attack_builder_func) if self.attack_builder_func else None,
@@ -122,10 +122,10 @@ class IML_UAP(OptimAttack):
                 cor_mask = y_pred == y_batch
 
                 not_fooled_ratio = cor_mask.float().mean().item()
-                self.metric_logger.report_scalar("IML/not_fooled_ratio", not_fooled_ratio, step_num)
+                self.metric_tracker.report_scalar("IML/not_fooled_ratio", not_fooled_ratio, step_num)
 
                 if not cor_mask.any():
-                    self.metric_logger.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
+                    self.metric_tracker.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
                     return None
 
                 x_batch = x_batch[cor_mask]
@@ -148,10 +148,10 @@ class IML_UAP(OptimAttack):
                 suc_mask = y_attk != y_batch
 
                 sample_asr = suc_mask.float().mean().item()
-                self.metric_logger.report_scalar("IML/sample_attack_success_ratio", sample_asr, step_num)
+                self.metric_tracker.report_scalar("IML/sample_attack_success_ratio", sample_asr, step_num)
 
                 if not suc_mask.any():
-                    self.metric_logger.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
+                    self.metric_tracker.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
                     return None
 
                 activ = {k: v[suc_mask] for k, v in activ.items()}
@@ -160,7 +160,7 @@ class IML_UAP(OptimAttack):
         num_remaining = list(activ.values())[0].size(0)
         num_initial = data[0].size(0)
         batch_ratio = num_remaining / num_initial
-        self.metric_logger.report_scalar("IML/effective_batch_ratio", batch_ratio, step_num)
+        self.metric_tracker.report_scalar("IML/effective_batch_ratio", batch_ratio, step_num)
 
         loss = self.criterion(activ, adv_act)
         return loss
