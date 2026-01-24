@@ -18,6 +18,7 @@ class ModelName(str, Enum):
     ALEXNET = "alextnet"
     RESNET50 = "resnet50"
     INCEPTION_V3 = "inception-v3"
+    VIT_B = "vit-b"
     SALMAN_RESNET50 = "salman-resnet50"
     SINGH_VIT_S = "singh-vit-s"
 
@@ -55,6 +56,9 @@ def load_model(
 
     if model_name == ModelName.INCEPTION_V3 and dataset_name == DatasetName.IMAGENET:
         return load_torchvision_model("inception_v3", device=device)
+    
+    if model_name == ModelName.VIT_B and dataset_name == DatasetName.IMAGENET:
+        return load_torchvision_model("vit_b_16", device=device)
 
     if model_name == ModelName.RESNET50 and dataset_name == DatasetName.IMAGENET:
         return load_robust_model("Standard_R50", "imagenet", norm="Linf", device=device)

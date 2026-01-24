@@ -17,6 +17,7 @@ from ulib.activation_extractor import ActivationExtractor
 class FG_Experiment(Experiment):
     def add_arguments(self, parser: ArgumentParser) -> None:
         fg_args = parser.add_argument_group("FG-UAP Attack Arguments")
+        
         fg_args.add_argument(
             "--lr",
             type=float,
@@ -24,15 +25,17 @@ class FG_Experiment(Experiment):
             metavar="FLOAT",
             help="Learning rate for Adam optimizer",
         )
+        
         fg_args.add_argument(
-            "--weight-decay",
+            "--weight_decay",
             type=float,
             default=1e-5,
             metavar="FLOAT",
             help="Weight decay for Adam optimizer",
         )
+        
         fg_args.add_argument(
-            "--layer-name",
+            "--layer_name",
             type=str,
             default="model.avgpool",
             metavar="NAME",

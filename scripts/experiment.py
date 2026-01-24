@@ -6,6 +6,8 @@ import argparse
 import random
 import time
 import torch
+from typing import Callable
+from contextlib import ExitStack
 
 # set pythonpath to the main module directory
 module_dir = pathlib.Path(__file__).parent.resolve().parent
@@ -63,6 +65,16 @@ class Experiment(ABC):
         )
 
         parser.add_argument(
+            "--test_datasets",
+            type=str,
+            choices=SUPPORTED_DATASETS,
+            nargs="+",
+            default=[],
+            metavar="DATASET",
+            help=f"Additional datasets for final evaluation. Available datasets: {SUPPORTED_DATASETS}",
+        )
+
+        parser.add_argument(
             "--evaluator",
             type=str,
             choices=SUPPORTED_EVALUATORS,
@@ -109,6 +121,22 @@ class Experiment(ABC):
             default="INFO",
             metavar="LEVEL",
             help=f"Logging level to python-logger. Available levels: {loglevel_names()}",
+        )
+
+        parser.add_argument(
+            "--project_name",
+            type=str,
+            default="CLF-IML",
+            metavar="NAME",
+            help="The name of the project for logging purposes.",
+        )
+
+        parser.add_argument(
+            "--log_dir",
+            type=str,
+            default="logs",
+            metavar="PATH",
+            help="Directory to save logs and results.",
         )
 
         parser.add_argument(
@@ -225,6 +253,29 @@ class Experiment(ABC):
     ) -> UnivAttack:
         pass
 
+    def final_evaluation(self, univ_attack: UnivAttack, ds_transform: Callable, metric_tracker: MetricTracker):
+        args = self.args()
+        log_dir = metric_tracker.log_dir
+
+        if log_dir is None:
+            logger.warning("No log directory found. Skipping final evaluation.")
+            return
+
+        dataset_names = args.test_datasets
+        if args.dataset not in dataset_names:
+            dataset_names.append(args.dataset)
+
+        logger.info(f"Running final evaluation on datasets: {dataset_names}")
+
+        for ds_name in dataset_names:
+            _, _, dl_test = load_dataset(ds_name, ds_transform, args.train_batch, args.eval_batch)
+            logger.info(f"Loaded test dataset: {ds_name} with {dl_test.total} samples.")
+            logger.info(f"Evaluating on test dataset: {ds_name}")
+
+            test_metrics = univ_attack.evaluate(dl_test)
+            test_metrics = {f"{ds_name}/{k}": v for k, v in test_metrics.items()}
+            metric_tracker.report_globals(test_metrics)
+
     def run(self):
         args = self.args()
 
@@ -232,26 +283,27 @@ class Experiment(ABC):
             logger.error("No GPU available. Exiting.")
             sys.exit(1)
 
-        with MetricTracker.create(
-            args.model,
-            args.dataset,
-            f"L_{args.norm}",
-            f"Eps_{args.epsilon}",
-            args.run_name,
-            kind="wandb",
-            project="CLF-IML",
-            root_dir="logs",
-            disabled=args.test_run,
-        ) as metric_tracker:
+        with ExitStack() as stack:
+            metric_tracker = MetricTracker.create(
+                args.model,
+                args.dataset,
+                f"L_{args.norm}",
+                f"Eps_{args.epsilon}",
+                args.run_name,
+                kind="wandb",
+                root_dir=args.log_dir,
+                project=args.project_name,
+                disabled=args.test_run,
+            )
+            
+            metric_tracker = stack.enter_context(metric_tracker)
+            
             logger.info(f"Loading model: {args.model}")
             model, ds_transform = load_model(args.model, args.dataset, device="cuda:0")
 
             logger.info(f"Loading dataset: {args.dataset}")
             dl_train, dl_eval, dl_test = load_dataset(args.dataset, ds_transform, args.train_batch, args.eval_batch)
-            logger.info(
-                f"Loaded datasets with sample counts: "
-                f"(train, val, test) = ({dl_train.total}, {dl_eval.total}, {dl_test.total})."
-            )
+            logger.info(f"Loaded datasets with sample counts: (train, val, test) = ({dl_train.total}, {dl_eval.total}, {dl_test.total}).")
 
             pert_model = PertModule(
                 model,
@@ -294,11 +346,11 @@ class Experiment(ABC):
                 max_evals=None if not args.test_run else 1,
             )
 
+            logger.info("Running attack...")
             pert_model = univ_attack.fit(dl_train, dl_eval, stop_criteria=stop)
 
             logger.info("Running test evaluation...")
-            metrics = univ_attack.evaluate(dl_test)
-            metric_tracker.report_globals(metrics)
+            self.final_evaluation(univ_attack, ds_transform, metric_tracker)
 
     def main(self):
         try:
