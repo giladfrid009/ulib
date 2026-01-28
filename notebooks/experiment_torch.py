@@ -54,8 +54,8 @@ def load_torchvision_experiment(
 
     if not silent:
         evaluator = SimpleEvaluator(model, verbose=True)
-        clean_train_acc = evaluator.evaluate(dl_train)["accuracy"]
-        clean_eval_acc = evaluator.evaluate(dl_eval)["accuracy"]
+        clean_train_acc = evaluator.evaluate(dl_train)["ACC"]
+        clean_eval_acc = evaluator.evaluate(dl_eval)["ACC"]
 
         print(f"Model     : {type(orig_model).__name__}")
         print(f"Device    : {device}")

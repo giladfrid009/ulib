@@ -88,8 +88,8 @@ def load_robust_experiment(
 
     if not silent:
         evaluator = SimpleEvaluator(model, verbose=True)
-        clean_train_acc = evaluator.evaluate(dl_train)["accuracy"]
-        clean_eval_acc = evaluator.evaluate(dl_eval)["accuracy"]
+        clean_train_acc = evaluator.evaluate(dl_train)["ACC"]
+        clean_eval_acc = evaluator.evaluate(dl_eval)["ACC"]
         
         model_info = get_info(model_type, dataset, norm)
         print(f"Model        :  {type(model).__name__}")

@@ -45,7 +45,7 @@ class UnivAttack(ABC):
             raise ValueError("Evaluation frequency must be greater than 0.")
 
         if evaluator is None:
-            evaluator = SimpleEvaluator(pert_model, main_metric="misclassification_rate", verbose=True)
+            evaluator = SimpleEvaluator(pert_model, main_metric="MR", verbose=True)
 
         self.pert_model = pert_model
         self.orig_model = pert_model.model
