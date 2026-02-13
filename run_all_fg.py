@@ -10,18 +10,19 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "FG_UAP_CV"
+PROJECT_NAME = "VISION_FG_UAP"
 SCRIPT_PATH = "scripts/run_fg_uap.py"
 
 # Default Arguments shared across all runs unless overridden
 DEFAULT_RUN_ARGS = {
-    "log_dir": "logs/run_all_fg",
+    "log_dir": "logs-fg-uap",
     "dataset": "imagenet",
-    "test_datasets": [],
     "evaluator": "simple",
-    "train_batch": 32,
-    "eval_batch": 64,
-    "max_epochs": 10,
+    "train_batch": 128,
+    "eval_batch": 128,
+    "max_epochs": 30,
+    "max_time": 90,
+    "patience": 10,
     "epsilon": 16,
     "norm": float("inf"),
     "use_amp": "true",
@@ -32,13 +33,7 @@ DEFAULT_RUN_ARGS = {
 # =============================================================================
 
 EXP_SETUP_STD = {
-    "lr": 0.01,
-    "weight_decay": 1e-5,
-}
-
-EXP_SETUP_AGGRESSIVE = {
-    "lr": 0.02,
-    "weight_decay": 1e-5,
+    "lr": 0.02, # from the paper
 }
 
 # =============================================================================
@@ -46,27 +41,106 @@ EXP_SETUP_AGGRESSIVE = {
 # =============================================================================
 
 MODELS = {
-    "resnet50": {
-        "nick": "R50",
-        "experiments": {"std": EXP_SETUP_STD, "aggressive": EXP_SETUP_AGGRESSIVE},
+    # standard models
+    # "vit-b": {
+    #     "nick": "vit-b",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "vit-b",
+    #     "layer": "model.heads.head",
+    # },
+    # "resnet50": {
+    #     "nick": "resnet50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "resnet50",
+    #     "layer": "model.fc",
+    # },
+    # "inception-v3": {
+    #     "nick": "inception-v3",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "inception-v3",
+    #     "layer": "model.fc",
+    # },
+    # "convnext": {
+    #     "nick": "convnext",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "convnext",
+    #     "layer": "model.classifier.2",
+    # },
+    # "swin": {
+    #     "nick": "swin",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "swin",
+    #     "layer": "model.head",
+    # },
+    # robust models
+    # "salman-resnet50": {
+    #     "nick": "salman-resnet50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "salman-resnet50",
+    #     "layer": "model.fc",
+    # },
+    "singh-vit": {
+        "nick": "singh-vit",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
         # CLI Arguments
-        "model": "resnet50",
-        "layer_name": "model.avgpool",
+        "model": "singh-vit",
+        "layer": "model.head",
     },
-    "salman_r50": {
-        "nick": "SalmanR50",
-        "experiments": {"std": EXP_SETUP_STD},
-        # CLI Arguments
-        "model": "salman-resnet50",
-        "layer_name": "model.avgpool",
-    },
-    "vits": {
-        "nick": "ViT-S",
-        "experiments": {"std": EXP_SETUP_STD},
-        # CLI Arguments
-        "model": "singh-vit-s",
-        "layer_name": "model.norm", # Adjust as needed
-    },
+    # "wong-resnet50": {
+    #     "nick": "wong-resnet50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "wong-resnet50",
+    #     "layer": "model.fc",
+    # },
+    # "liu-convnext": {
+    #     "nick": "liu-convnext",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "liu-convnext",
+    #     "layer": "model.head.fc",
+    # },
+    # "liu-swin": {
+    #     "nick": "liu-swin",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "liu-swin",
+    #     "layer": "model.head.fc",
+    # },
+    # "peng-wrn50": {
+    #     "nick": "peng-wrn50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },        # CLI Arguments
+    #     "model": "peng-wrn50",
+    #     "layer": "fc",
+    # },
 }
 
 # =============================================================================

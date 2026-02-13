@@ -15,10 +15,28 @@ from ulib.attacks.iml_uap import IML_UAP, CosSim
 from ulib.activation_extractor import ActivationExtractor
 
 
+INNER_ATTACKS = ["fgsm", "ffgsm", "pgd", "cw"]
+
+
 class IML_Experiment(Experiment):
     def add_arguments(self, parser: ArgumentParser) -> None:
         iml_args = parser.add_argument_group("IML-UAP Attack Arguments")
-        
+
+        iml_args.add_argument(
+            "--inner_attack",
+            type=str,
+            default="ffgsm",
+            choices=INNER_ATTACKS,
+            help="The inner attack method to use for crafting the universal perturbation.",
+        )
+
+        iml_args.add_argument(
+            "--inner_epsilon",
+            type=float,
+            default=None,
+            help="The maximum epsilon value for the inner attack. If not specified, then using the same epsilon as the outer attack.",
+        )
+
         iml_args.add_argument(
             "--lr",
             type=float,
@@ -58,14 +76,24 @@ class IML_Experiment(Experiment):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
         criterion = CosSim(reduce_fn=lambda losses: torch.sum(losses, dim=-1).mean())
-        activ_extractor = ActivationExtractor(pert_model.model, **args.layers, capture_output=True) # NOTE: HERE WE DP CAPTURE THE OUTPUT
+        activ_extractor = ActivationExtractor(pert_model.model, *args.layers, capture_output=True)
 
         def attack_builder(model: torch.nn.Module, epoch: int) -> torchattacks.attack.Attack:
-            eps = (pert_model.eps / args.max_epochs) * (epoch + 1)
-            # return torchattacks.FFGSM(model, eps=eps, alpha=eps)
-            # return torchattacks.PGD(model, eps=eps, alpha=eps / 3, steps=5)
-            # return torchattacks.Jitter(model, eps=eps, alpha=eps / 3, steps=5)
-            return torchattacks.CW(model, steps=5, lr=eps / 3)
+
+            # compute the current epsilon value based on the epoch number (linear schedule)
+            max_eps = args.inner_epsilon if args.inner_epsilon is not None else pert_model.eps
+            eps = (max_eps / args.max_epochs) * (epoch + 1)
+
+            if args.inner_attack == "fgsm":
+                return torchattacks.FGSM(model, eps=eps)
+            if args.inner_attack == "ffgsm":
+                return torchattacks.FFGSM(model, eps=eps, alpha=eps)
+            if args.inner_attack == "pgd":
+                return torchattacks.PGD(model, eps=eps, alpha=eps / 3, steps=5)
+            if args.inner_attack == "cw":
+                return torchattacks.CW(model, lr=eps / 3, steps=5)
+
+            raise ValueError(f"Unsupported inner attack method: {args.inner_attack}")
 
         return IML_UAP(
             pert_model=pert_model,

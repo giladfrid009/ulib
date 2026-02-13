@@ -8,6 +8,7 @@ import time
 import torch
 from typing import Callable
 from contextlib import ExitStack
+import pandas as pd
 
 # set pythonpath to the main module directory
 module_dir = pathlib.Path(__file__).parent.resolve().parent
@@ -15,7 +16,7 @@ if str(module_dir) not in sys.path:
     sys.path.append(str(module_dir))
 
 
-from ulib.evaluator import MetricEvaluator
+from ulib.evaluator import MetricEvaluator, ExtendedEvaluator
 from ulib.utils import env
 from ulib import PertModule, StopCriteria, UnivAttack
 from ulib.utils.trackers import MetricTracker
@@ -265,6 +266,7 @@ class Experiment(ABC):
         if args.dataset not in dataset_names:
             dataset_names.append(args.dataset)
 
+        evaluator = ExtendedEvaluator(univ_attack.pert_model)
         logger.info(f"Running final evaluation on datasets: {dataset_names}")
 
         for ds_name in dataset_names:
@@ -272,9 +274,13 @@ class Experiment(ABC):
             logger.info(f"Loaded test dataset: {ds_name} with {dl_test.total} samples.")
             logger.info(f"Evaluating on test dataset: {ds_name}")
 
-            test_metrics = univ_attack.evaluate(dl_test)
+            test_metrics = evaluator.evaluate(dl_test)
             test_metrics = {f"{ds_name}/{k}": v for k, v in test_metrics.items()}
             metric_tracker.report_globals(test_metrics)
+            
+            df = pd.DataFrame([test_metrics])
+            df.to_csv(f"{log_dir}/{ds_name}_results.csv", index=False)
+            logger.info(f"Saved evaluation results to '{log_dir}/'.")
 
     def run(self):
         args = self.args()
@@ -336,8 +342,6 @@ class Experiment(ABC):
                 metric_tracker.upload_code(main_file)
             if expr_file := getattr(sys.modules.get(__name__), "__file__", None):
                 metric_tracker.upload_code(expr_file)
-
-            logger.info("Running attack...")
 
             stop = StopCriteria(
                 max_epochs=args.max_epochs if not args.test_run else 1,

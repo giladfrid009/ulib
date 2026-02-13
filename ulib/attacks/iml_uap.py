@@ -139,9 +139,9 @@ class IML_UAP(OptimAttack):
                 x_attk = self.inner_attack.forward(x_pert.detach(), y_batch)
 
             # record forward pass activations
-            # TODO: enable inference mode here?
-            y_attk = self.orig_model(x_attk).argmax(dim=1)
-            adv_act = self.extractor.get_activations()
+            with torch.no_grad():
+                y_attk = self.orig_model(x_attk).argmax(dim=1)
+                adv_act = self.extractor.get_activations()
 
             if self.skip_failed_attacks:
                 # use only successfully attacked samples

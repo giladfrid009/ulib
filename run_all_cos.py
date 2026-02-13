@@ -10,18 +10,19 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "Cos_UAP_CV"
+PROJECT_NAME = "VISION_COS_UAP"
 SCRIPT_PATH = "scripts/run_cos_uap.py"
 
 # Default Arguments shared across all runs unless overridden
 DEFAULT_RUN_ARGS = {
-    "log_dir": "logs/run_ll_cos",
+    "log_dir": "logs-cos-uap",
     "dataset": "imagenet",
-    "test_datasets": [],
     "evaluator": "simple",
-    "train_batch": 32,
-    "eval_batch": 64,
-    "max_epochs": 10,
+    "train_batch": 128,
+    "eval_batch": 128,
+    "max_epochs": 30,
+    "max_time": 90,
+    "patience": 10,
     "epsilon": 16,
     "norm": float("inf"),
     "use_amp": "true",
@@ -32,11 +33,7 @@ DEFAULT_RUN_ARGS = {
 # =============================================================================
 
 EXP_SETUP_STD = dict(
-    lr=0.005,
-)
-
-EXP_SETUP_HIGH_LR = dict(
-    lr=0.01,
+    lr=0.02, # as long as we converge, it is fine.
 )
 
 # =============================================================================
@@ -44,24 +41,95 @@ EXP_SETUP_HIGH_LR = dict(
 # =============================================================================
 
 MODELS = {
+    # standard models
+    # "vit-b": {
+    #     "nick": "vit-b",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "vit-b",
+    # },
     "resnet50": {
-        "nick": "R50",
-        "experiments": {"std": EXP_SETUP_STD, "high_lr": EXP_SETUP_HIGH_LR},
+        "nick": "resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
         # CLI Arguments
         "model": "resnet50",
     },
-    "salman_r50": {
-        "nick": "SalmanR50",
-        "experiments": {"std": EXP_SETUP_STD},
+    "inception-v3": {
+        "nick": "inception-v3",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "inception-v3",
+    },
+    # "convnext": {
+    #     "nick": "convnext",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "convnext",
+    # },
+    # "swin": {
+    #     "nick": "swin",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "swin",
+    # },
+    # robust models
+    "salman-resnet50": {
+        "nick": "salman-resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
         # CLI Arguments
         "model": "salman-resnet50",
     },
-    "vits": {
-        "nick": "ViT-S",
-        "experiments": {"std": EXP_SETUP_STD},
+    "singh-vit": {
+        "nick": "singh-vit",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
         # CLI Arguments
-        "model": "singh-vit-s",
+        "model": "singh-vit",
     },
+    # "wong-resnet50": {
+    #     "nick": "wong-resnet50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "wong-resnet50",
+    # },
+    # "liu-convnext": {
+    #     "nick": "liu-convnext",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "liu-convnext",
+    # },
+    # "liu-swin": {
+    #     "nick": "liu-swin",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },
+    #     # CLI Arguments
+    #     "model": "liu-swin",
+    # },
+    # "peng-wrn50": {
+    #     "nick": "peng-wrn50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },        # CLI Arguments
+    #     "model": "peng-wrn50",
+    # },
 }
 
 # =============================================================================

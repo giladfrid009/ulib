@@ -6,7 +6,7 @@ from collections import OrderedDict
 import re
 
 from ulib.utils.logging import create_logger
-from ulib.utils.torch import get_device
+from ulib.utils.torch import get_device, clear_memory
 
 
 logger = create_logger(__name__)
@@ -48,6 +48,7 @@ def load_torchvision_model(
     if device is None:
         device = get_device()
 
+    clear_memory()
     weights_enum = models.get_model_weights(model_type)
     weights: models.Weights = weights_enum.DEFAULT  # type: ignore
     orig_model = models.get_model(name=model_type, weights=weights, progress=True, **model_kwargs)

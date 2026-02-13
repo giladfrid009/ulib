@@ -27,15 +27,7 @@ class FG_Experiment(Experiment):
         )
         
         fg_args.add_argument(
-            "--weight_decay",
-            type=float,
-            default=1e-5,
-            metavar="FLOAT",
-            help="Weight decay for Adam optimizer",
-        )
-        
-        fg_args.add_argument(
-            "--layer_name",
+            "--layer",
             type=str,
             default="model.avgpool",
             metavar="NAME",
@@ -44,8 +36,8 @@ class FG_Experiment(Experiment):
 
     def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
         args = self.args()
-        optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        activ_extractor = ActivationExtractor(pert_model.model, args.layer_name, exact_match=True)
+        optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
+        activ_extractor = ActivationExtractor(pert_model.model, args.layer, exact_match=True, capture_output=False)
 
         return FG_UAP(
             pert_model=pert_model,

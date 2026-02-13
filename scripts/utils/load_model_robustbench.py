@@ -6,7 +6,7 @@ import json
 import re
 
 from ulib.utils.logging import create_logger
-from ulib.utils.torch import get_device
+from ulib.utils.torch import get_device, clear_memory
 
 from robustbench.utils import load_model as robust_load_model
 from robustbench.data import get_preprocessing as robust_get_preprocessing
@@ -88,6 +88,7 @@ def load_robust_model(
     ds_enum = BenchmarkDataset(dataset)
     norm_enum = ThreatModel(norm)
 
+    clear_memory()
     model = robust_load_model(model_type, dataset=ds_enum, threat_model=norm_enum)
     model = model.eval().to(device)
     _patch_class_name(model, model_type)
@@ -100,7 +101,7 @@ def load_robust_model(
     )
 
     model_info = robust_model_info(model_type, dataset, norm)
-    logger.info(f"Model        :  {type(model).__name__}")
+    logger.info(f"Model        : {type(model).__name__}")
     logger.info(f"Device       : {device}")
     logger.info(f"RB Name      : {model_info.name}")
     logger.info(f"RB Arch      : {model_info.architecture}")

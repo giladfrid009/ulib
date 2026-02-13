@@ -10,18 +10,17 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "IML_UAP_CV"
+PROJECT_NAME = "VISION_IML_UAP"
 SCRIPT_PATH = "scripts/run_iml_uap.py"
 
 # Default Arguments shared across all runs unless overridden
 DEFAULT_RUN_ARGS = {
-    "log_dir": "logs/run_all_iml",
+    "log_dir": "logs-iml",
     "dataset": "imagenet",
-    "test_datasets": [],
     "evaluator": "simple",
-    "train_batch": 32,
-    "eval_batch": 64,
-    "max_epochs": 10,
+    "train_batch": 128,
+    "eval_batch": 128,
+    "max_epochs": 30,
     "epsilon": 16,
     "norm": float("inf"),
     "use_amp": "true",
@@ -31,17 +30,22 @@ DEFAULT_RUN_ARGS = {
 # Experiment Setups
 # =============================================================================
 
+EXP_SETUP_FAST = dict(
+    lr=0.1,
+    skip_fooled="true",
+    skip_failed="true",
+)
+
 EXP_SETUP_STD = dict(
     lr=0.02,
     skip_fooled="true",
     skip_failed="true",
 )
 
-EXP_SETUP_LONG = dict(
-    lr=0.01,
+EXP_SETUP_SLOW = dict(
+    lr=0.005,
     skip_fooled="true",
     skip_failed="true",
-    max_epochs=20,
 )
 
 # =============================================================================
@@ -49,20 +53,147 @@ EXP_SETUP_LONG = dict(
 # =============================================================================
 
 MODELS = {
+    # standard models
     "resnet50": {
-        "nick": "R50",
-        "experiments": {"std": EXP_SETUP_STD},
+        "nick": "resnet50",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            "std": EXP_SETUP_STD,
+            # "fast": EXP_SETUP_FAST,
+        },
         # CLI Arguments
         "model": "resnet50",
         "layers": ["model.avgpool"],
+        "inner_attack": "ffgsm",
     },
-    "salman_r50": {
-        "nick": "SalmanR50",
-        "experiments": {"std": EXP_SETUP_STD},
+    "inception-v3": {
+        "nick": "inception-v3",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            "std": EXP_SETUP_STD,
+            # "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "inception-v3",
+        "layers": ["model.avgpool"],
+        "inner_attack": "ffgsm",
+    },
+    # "vit-b": {
+    #     "nick": "vit-b",
+    #     "experiments": {"std": EXP_SETUP_STD},
+    #     # CLI Arguments
+    #     "model": "vit-b",
+    #     "layers": ["model.encoder"],
+    #     "inner_attack": "ffgsm",
+    # },
+    "convnext": {
+        "nick": "convnext",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            "std": EXP_SETUP_STD,
+            # "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "convnext",
+        "layers": ["model.classifier.1"],
+        "inner_attack": "ffgsm",
+    },
+    "swin": {
+        "nick": "swin",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            "std": EXP_SETUP_STD,
+            # "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "swin",
+        "layers": [
+            "model.flatten",
+            "model.features.7.1.attn",
+            "model.features.5.3.attn",
+            "model.features.3.1.attn",
+        ],
+        "inner_attack": "pgd",
+    },
+    # robust models
+    "wong-resnet50": {
+        "nick": "wong-resnet50",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            # "std": EXP_SETUP_STD,
+            "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "wong-resnet50",
+        "layers": ["model.avgpool"],
+        "inner_attack": "ffgsm",
+    },
+    "salman-resnet50": {
+        "nick": "salman-resnet50",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            # "std": EXP_SETUP_STD,
+            "fast": EXP_SETUP_FAST,
+        },
         # CLI Arguments
         "model": "salman-resnet50",
         "layers": ["model.avgpool"],
+        "inner_attack": "cw",
     },
+    "singh-vit": {
+        "nick": "singh-vit",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            # "std": EXP_SETUP_STD,
+            "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "singh-vit",
+        "layers": ["model.head_drop"],
+        "inner_attack": "ffgsm",
+    },
+    "liu-convnext": {
+        "nick": "liu-convnext",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            # "std": EXP_SETUP_STD,
+            "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "liu-convnext",
+        "layers": [
+            "model.head.drop",
+            "model.stages.2.blocks.10.conv_dw",
+            "model.stages.2.blocks.20.conv_dw",
+            "model.stages.2.blocks.26.conv_dw",
+            "model.stages.3.blocks.1.conv_dw",
+        ],
+        "inner_attack": "fgsm",
+    },
+    "liu-swin": {
+        "nick": "liu-swin",
+        "experiments": {
+            # "slow": EXP_SETUP_SLOW,
+            # "std": EXP_SETUP_STD,
+            "fast": EXP_SETUP_FAST,
+        },
+        # CLI Arguments
+        "model": "liu-swin",
+        "layers": ["model.head.drop"],
+        "inner_attack": "ffgsm",
+    },
+    # "peng-wrn50": {
+    #     "nick": "peng-wrn50",
+    #     "experiments": {
+    #        "slow": EXP_SETUP_SLOW,
+    #        "std": EXP_SETUP_STD,
+    #        "fast": EXP_SETUP_FAST,
+    #    },
+    #     # CLI Arguments
+    #     "model": "peng-wrn50",
+    #     "layers": [],
+    #     "inner_attack": "ffgsm",
+    # },
 }
 
 # =============================================================================
@@ -88,9 +219,9 @@ def build_command(run_config: Dict[str, Any], script_path: str, run_name: str, p
         # Skip empty lists to avoid argparse errors with nargs='+'
         if isinstance(arg_value, list) and len(arg_value) == 0:
             continue
-            
+
         cmd_args.append(f"--{arg_name}")
-        
+
         # Handle lists (repeated arguments or specific formatting based on implementation)
         # Assuming argparse nargs='+' style inputs
         if isinstance(arg_value, list):
@@ -116,7 +247,7 @@ def run_experiment(model_key: str, iteration: int, total_iters: int, name_suffix
     if model_key not in MODELS:
         print(f"!! Model {model_key} not found in registry.")
         return
-        
+
     model_conf = copy.deepcopy(MODELS[model_key])
 
     # Extract special control fields

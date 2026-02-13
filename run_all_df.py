@@ -10,18 +10,19 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "DF_UAP_CV"
+PROJECT_NAME = "VISION_DF_UAP"
 SCRIPT_PATH = "scripts/run_df_uap.py"
 
 # Default Arguments shared across all runs unless overridden
 DEFAULT_RUN_ARGS = {
-    "log_dir": "logs/run_all_df",
+    "log_dir": "logs-df-uap",
     "dataset": "imagenet",
-    "test_datasets": [],
     "evaluator": "simple",
-    "train_batch": 32,
-    "eval_batch": 64,
-    "max_epochs": 10,
+    "train_batch": 128, # from the paper
+    "eval_batch": 128,
+    "max_epochs": 30,
+    "max_time": 90,
+    "patience": 10,
     "epsilon": 16,
     "norm": float("inf"),
     "use_amp": "true",
@@ -32,13 +33,38 @@ DEFAULT_RUN_ARGS = {
 # =============================================================================
 
 EXP_SETUP_STD = dict(
-    lr=0.005,
-    kappa=0.0,
+    lr=0.005, # from the paper
+    kappa=0.0, # not stated in the paper
 )
 
-EXP_SETUP_HIGH_KAPPA = dict(
+EXP_SETUP_KAPPA_05 = dict(
     lr=0.005,
-    kappa=10.0,
+    kappa=0.5,
+)
+
+EXP_SETUP_KAPPA_1 = dict(
+    lr=0.005,
+    kappa=1.0,
+)
+
+EXP_SETUP_KAPPA_2 = dict(
+    lr=0.005,
+    kappa=2.0,
+)
+
+EXP_SETUP_KAPPA_4 = dict(
+    lr=0.005,
+    kappa=4.0,
+)
+
+EXP_SETUP_KAPPA_NEG1 = dict(
+    lr=0.005,
+    kappa=-1.0,
+)
+
+EXP_SETUP_KAPPA_NEG2 = dict(
+    lr=0.005,
+    kappa=-2.0,
 )
 
 # =============================================================================
@@ -46,24 +72,159 @@ EXP_SETUP_HIGH_KAPPA = dict(
 # =============================================================================
 
 MODELS = {
-    "resnet50": {
-        "nick": "R50",
-        "experiments": {"std": EXP_SETUP_STD, "h_kappa": EXP_SETUP_HIGH_KAPPA},
+    # standard models
+    # "vit-b": {
+    #     "nick": "vit-b",
+        # "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+        # },
+    #     # CLI Arguments
+    #     "model": "vit-b",
+    # },
+        "resnet50": {
+        "nick": "resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
         # CLI Arguments
         "model": "resnet50",
     },
-    "salman_r50": {
-        "nick": "SalmanR50",
-        "experiments": {"std": EXP_SETUP_STD},
+    "inception-v3": {
+        "nick": "inception-v3",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
+        # CLI Arguments
+        "model": "inception-v3",
+    },
+    "convnext": {
+        "nick": "convnext",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
+        # CLI Arguments
+        "model": "convnext",
+    },
+    "swin": {
+        "nick": "swin",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
+        # CLI Arguments
+        "model": "swin",
+    },
+    # robust models
+    "salman-resnet50": {
+        "nick": "salman-resnet50",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
         # CLI Arguments
         "model": "salman-resnet50",
     },
-    "vits": {
-        "nick": "ViT-S",
-        "experiments": {"std": EXP_SETUP_STD},
+    "singh-vit": {
+        "nick": "singh-vit",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
         # CLI Arguments
-        "model": "singh-vit-s",
+        "model": "singh-vit",
     },
+    "wong-resnet50": {
+        "nick": "wong-resnet50",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
+        # CLI Arguments
+        "model": "wong-resnet50",
+    },
+    "liu-convnext": {
+        "nick": "liu-convnext",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
+        # CLI Arguments
+        "model": "liu-convnext",
+    },
+    "liu-swin": {
+        "nick": "liu-swin",
+        "experiments": {
+            # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+        },
+        # CLI Arguments
+        "model": "liu-swin",
+    },
+    # "peng-wrn50": {
+    #     "nick": "peng-wrn50",
+    #     "experiments": {
+    #         # "std": EXP_SETUP_STD,
+            # "kappa_05": EXP_SETUP_KAPPA_05,
+            # "kappa_1": EXP_SETUP_KAPPA_1,
+            # "kappa_2": EXP_SETUP_KAPPA_2,
+            # "kappa_4": EXP_SETUP_KAPPA_4,
+            # "kappa_neg1": EXP_SETUP_KAPPA_NEG1,
+            # "kappa_neg2": EXP_SETUP_KAPPA_NEG2,
+    #     },        
+    #     # CLI Arguments
+    #     "model": "peng-wrn50",
+    # },
 }
 
 # =============================================================================
