@@ -17,7 +17,6 @@ logger = create_logger(__name__)
 
 class ModelName(str, Enum):
     # standard models
-    ALEXNET = "alextnet"
     RESNET50 = "resnet50"
     INCEPTION_V3 = "inception-v3"
     VIT = "vit-b"
@@ -70,9 +69,6 @@ def load_model(
     clear_memory()
 
     # standard models
-
-    if model_name == ModelName.ALEXNET and dataset_name == DatasetName.IMAGENET:
-        return load_torchvision_model("alexnet", device=device)
 
     if model_name == ModelName.RESNET50 and dataset_name == DatasetName.IMAGENET:
         return load_robust_model("Standard_R50", "imagenet", norm="Linf", device=device)

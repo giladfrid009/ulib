@@ -36,6 +36,13 @@ class IML_Experiment(Experiment):
             default=None,
             help="The maximum epsilon value for the inner attack. If not specified, then using the same epsilon as the outer attack.",
         )
+        
+        iml_args.add_argument(
+            "--inner_steps",
+            type=int,
+            default=5,
+            help="The number of steps for the inner attack (if applicable).",
+        )
 
         iml_args.add_argument(
             "--lr",
@@ -89,9 +96,9 @@ class IML_Experiment(Experiment):
             if args.inner_attack == "ffgsm":
                 return torchattacks.FFGSM(model, eps=eps, alpha=eps)
             if args.inner_attack == "pgd":
-                return torchattacks.PGD(model, eps=eps, alpha=eps / 3, steps=5)
+                return torchattacks.PGD(model, eps=eps, alpha=eps / 3, steps=args.inner_steps)
             if args.inner_attack == "cw":
-                return torchattacks.CW(model, lr=eps / 3, steps=5)
+                return torchattacks.CW(model, lr=eps / 3, steps=args.inner_steps)
 
             raise ValueError(f"Unsupported inner attack method: {args.inner_attack}")
 
