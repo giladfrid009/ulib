@@ -53,10 +53,10 @@ def load_model(
     """
     if isinstance(model_name, ModelName):
         model_name = model_name.value
-        
+
     if isinstance(dataset_name, DatasetName):
         dataset_name = dataset_name.value
-    
+
     if model_name not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model name: {model_name}.")
 
@@ -74,7 +74,12 @@ def load_model(
         return load_robust_model("Standard_R50", "imagenet", norm="Linf", device=device)
 
     if model_name == ModelName.INCEPTION_V3 and dataset_name == DatasetName.IMAGENET:
-        return load_torchvision_model("inception_v3", device=device)
+        model, trans = load_torchvision_model("inception_v3", device=device)
+        
+        # NOTE: bugfix when loading inception_v3 with train() mode
+        model.model.aux_logits = False # type: ignore
+        model.model.AuxLogits = None # type: ignore
+        return model, trans
 
     if model_name == ModelName.VIT and dataset_name == DatasetName.IMAGENET:
         return load_torchvision_model("vit_b_16", device=device)

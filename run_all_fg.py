@@ -97,24 +97,25 @@ MODELS = {
     #     "model": "salman-resnet50",
     #     "layer": "model.fc",
     # },
-    "singh-vit": {
-        "nick": "singh-vit",
-        "experiments": {
-            "std": EXP_SETUP_STD,
-        },
-        # CLI Arguments
-        "model": "singh-vit",
-        "layer": "model.head",
-    },
-    # "wong-resnet50": {
-    #     "nick": "wong-resnet50",
+    # "singh-vit": {
+    #     "nick": "singh-vit",
     #     "experiments": {
     #         "std": EXP_SETUP_STD,
     #     },
     #     # CLI Arguments
-    #     "model": "wong-resnet50",
-    #     "layer": "model.fc",
+    #     "model": "singh-vit",
+    #     "layer": "model.head",
     # },
+    "wong-resnet50": {
+        "nick": "wong-resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "wong-resnet50",
+        "layer": "model.fc",
+        "use_amp": "false",
+    },
     # "liu-convnext": {
     #     "nick": "liu-convnext",
     #     "experiments": {

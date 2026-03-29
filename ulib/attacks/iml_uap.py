@@ -120,6 +120,9 @@ class IML_UAP(OptimAttack):
             if self.skip_already_fooled:
                 # attack only non-fooled samples
                 cor_mask = y_pred == y_batch
+                
+                if self.targeted:
+                    cor_mask = ~cor_mask
 
                 not_fooled_ratio = cor_mask.float().mean().item()
                 self.metric_tracker.report_scalar("IML/not_fooled_ratio", not_fooled_ratio, step_num)
@@ -146,6 +149,9 @@ class IML_UAP(OptimAttack):
             if self.skip_failed_attacks:
                 # use only successfully attacked samples
                 suc_mask = y_attk != y_batch
+                
+                if self.targeted:
+                    suc_mask = ~suc_mask
 
                 sample_asr = suc_mask.float().mean().item()
                 self.metric_tracker.report_scalar("IML/sample_attack_success_ratio", sample_asr, step_num)

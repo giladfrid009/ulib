@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "autoattack",
     "clearml>=2.0.2",
     "ipykernel>=6.29.5",
     "ipywidgets>=8.1.7",
@@ -20,3 +21,6 @@ dependencies = [
     "tqdm>=4.67.1",
     "wandb>=0.23.1",
 ]
+
+[tool.uv.sources]
+autoattack = { git = "https://github.com/fra31/auto-attack.git" }

@@ -98,7 +98,7 @@ class DM_UAP(UnivAttack):
         model = self.orig_model
 
         with torch.no_grad():
-            outputs_ori = model.forward(x_batch)
+            outputs_ori = model(x_batch)
             _, target_label = torch.max(outputs_ori, dim=1)
 
         self.optimizer.zero_grad()

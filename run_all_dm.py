@@ -72,6 +72,12 @@ MODELS = {
         "model": "swin",
     },
     # robust models
+    "wong-resnet50": {
+        "nick": "wong-resnet50",
+        "experiments": {"std": EXP_SETUP_STD},
+        # CLI Arguments
+        "model": "wong-resnet50",
+    },
     "salman-resnet50": {
         "nick": "salman-resnet50",
         "experiments": {"std": EXP_SETUP_STD},
@@ -83,12 +89,6 @@ MODELS = {
         "experiments": {"std": EXP_SETUP_STD},
         # CLI Arguments
         "model": "singh-vit",
-    },
-    "wong-resnet50": {
-        "nick": "wong-resnet50",
-        "experiments": {"std": EXP_SETUP_STD},
-        # CLI Arguments
-        "model": "wong-resnet50",
     },
     "liu-convnext": {
         "nick": "liu-convnext",

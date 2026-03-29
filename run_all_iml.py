@@ -10,7 +10,7 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "VISION_IML_UAP"
+PROJECT_NAME = "VISION_IML_UAP_TARGETED"
 SCRIPT_PATH = "scripts/run_iml_uap.py"
 
 # Default Arguments shared across all runs unless overridden
@@ -21,6 +21,7 @@ DEFAULT_RUN_ARGS = {
     "train_batch": 128,
     "eval_batch": 128,
     "max_epochs": 30,
+    "max_time": 40,
     "epsilon": 16,
     "norm": float("inf"),
     "use_amp": "true",
@@ -42,12 +43,6 @@ EXP_SETUP_STD = dict(
     skip_failed="true",
 )
 
-EXP_SETUP_SLOW = dict(
-    lr=0.005,
-    skip_fooled="true",
-    skip_failed="true",
-)
-
 # =============================================================================
 # Model Registry
 # =============================================================================
@@ -57,9 +52,14 @@ MODELS = {
     "resnet50": {
         "nick": "resnet50",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            "std": EXP_SETUP_STD,
-            # "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_STD, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_STD, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_STD, "inner_attack": "cw"},
+            # "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            # "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            # "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "resnet50",
@@ -69,29 +69,31 @@ MODELS = {
     "inception-v3": {
         "nick": "inception-v3",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            "std": EXP_SETUP_STD,
-            # "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_STD, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_STD, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_STD, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "inception-v3",
         "layers": ["model.avgpool"],
         "inner_attack": "ffgsm",
     },
-    # "vit-b": {
-    #     "nick": "vit-b",
-    #     "experiments": {"std": EXP_SETUP_STD},
-    #     # CLI Arguments
-    #     "model": "vit-b",
-    #     "layers": ["model.encoder"],
-    #     "inner_attack": "ffgsm",
-    # },
     "convnext": {
         "nick": "convnext",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            "std": EXP_SETUP_STD,
-            # "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_STD, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_STD, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_STD, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "convnext",
@@ -101,9 +103,14 @@ MODELS = {
     "swin": {
         "nick": "swin",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            "std": EXP_SETUP_STD,
-            # "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_STD, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_STD, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_STD, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "swin",
@@ -119,9 +126,14 @@ MODELS = {
     "wong-resnet50": {
         "nick": "wong-resnet50",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            # "std": EXP_SETUP_STD,
-            "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "wong-resnet50",
@@ -131,9 +143,14 @@ MODELS = {
     "salman-resnet50": {
         "nick": "salman-resnet50",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            # "std": EXP_SETUP_STD,
-            "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "salman-resnet50",
@@ -143,9 +160,14 @@ MODELS = {
     "singh-vit": {
         "nick": "singh-vit",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            # "std": EXP_SETUP_STD,
-            "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "singh-vit",
@@ -155,9 +177,14 @@ MODELS = {
     "liu-convnext": {
         "nick": "liu-convnext",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            # "std": EXP_SETUP_STD,
-            "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "liu-convnext",
@@ -173,27 +200,20 @@ MODELS = {
     "liu-swin": {
         "nick": "liu-swin",
         "experiments": {
-            # "slow": EXP_SETUP_SLOW,
-            # "std": EXP_SETUP_STD,
-            "fast": EXP_SETUP_FAST,
+            # "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
+            # "ffgsm": {**EXP_SETUP_STD, "inner_attack": "ffgsm"},
+            # "pgd": {**EXP_SETUP_STD, "inner_attack": "pgd"},
+            # "cw": {**EXP_SETUP_STD, "inner_attack": "cw"},
+            "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
+            "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
+            "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
+            "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
         },
         # CLI Arguments
         "model": "liu-swin",
         "layers": ["model.head.drop"],
         "inner_attack": "ffgsm",
     },
-    # "peng-wrn50": {
-    #     "nick": "peng-wrn50",
-    #     "experiments": {
-    #        "slow": EXP_SETUP_SLOW,
-    #        "std": EXP_SETUP_STD,
-    #        "fast": EXP_SETUP_FAST,
-    #    },
-    #     # CLI Arguments
-    #     "model": "peng-wrn50",
-    #     "layers": [],
-    #     "inner_attack": "ffgsm",
-    # },
 }
 
 # =============================================================================

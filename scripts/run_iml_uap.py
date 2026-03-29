@@ -15,7 +15,15 @@ from ulib.attacks.iml_uap import IML_UAP, CosSim
 from ulib.activation_extractor import ActivationExtractor
 
 
-INNER_ATTACKS = ["fgsm", "ffgsm", "pgd", "cw"]
+INNER_ATTACKS = [
+    "fgsm",
+    "ffgsm",
+    "pgd",
+    "cw",
+    "tpgd",
+    "apgd",
+    "jitter",
+]
 
 
 class IML_Experiment(Experiment):
@@ -36,7 +44,7 @@ class IML_Experiment(Experiment):
             default=None,
             help="The maximum epsilon value for the inner attack. If not specified, then using the same epsilon as the outer attack.",
         )
-        
+
         iml_args.add_argument(
             "--inner_steps",
             type=int,
@@ -99,6 +107,12 @@ class IML_Experiment(Experiment):
                 return torchattacks.PGD(model, eps=eps, alpha=eps / 3, steps=args.inner_steps)
             if args.inner_attack == "cw":
                 return torchattacks.CW(model, lr=eps / 3, steps=args.inner_steps)
+            if args.inner_attack == "tpgd":
+                return torchattacks.TPGD(model, eps=eps, alpha=eps / 3, steps=args.inner_steps)
+            if args.inner_attack == "apgd":
+                return torchattacks.APGD(model, eps=eps, steps=args.inner_steps, loss="dlr")
+            if args.inner_attack == "jitter":
+                return torchattacks.Jitter(model, eps=eps, alpha=eps / 3, steps=args.inner_steps)
 
             raise ValueError(f"Unsupported inner attack method: {args.inner_attack}")
 
