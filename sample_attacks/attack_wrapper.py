@@ -1,4 +1,5 @@
 from torch import Tensor
+import torch
 from torchattacks.attack import Attack as TorchAttack, wrapper_method
 from sample_attacks.attack import Attack as BaseAttack
 
@@ -60,8 +61,11 @@ class AttackWrapper(TorchAttack):
         The general attack procedure
 
         Arguments:
-            inputs (N, C, H, W): tensor for input images
+            inputs (N, C, H, W): tensor for input images in [0, 1]
             labels (N,): tensor for ground-truth labels if untargeted
             labels (2,N): tensor for [ground-truth, targeted labels] if targeted
+            
+        Returns: (N, C, H, W) tensor for adversarial images
         """
-        return self.sample_attack.forward(inputs, labels, *args, **kwargs)
+        pert = self.sample_attack.forward(inputs, labels, *args, **kwargs)
+        return torch.clamp(inputs + pert, min=0, max=1).detach()

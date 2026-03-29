@@ -10,7 +10,7 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "VISION_IML_UAP_TARGETED"
+PROJECT_NAME = "VISION_IML_UAP_IAPS"
 SCRIPT_PATH = "scripts/run_iml_uap.py"
 
 # Default Arguments shared across all runs unless overridden
@@ -21,7 +21,7 @@ DEFAULT_RUN_ARGS = {
     "train_batch": 128,
     "eval_batch": 128,
     "max_epochs": 30,
-    "max_time": 40,
+    "max_time": 400,
     "epsilon": 16,
     "norm": float("inf"),
     "use_amp": "true",

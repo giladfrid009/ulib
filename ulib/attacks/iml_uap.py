@@ -139,7 +139,7 @@ class IML_UAP(OptimAttack):
             with self.autocast_context(enabled=False):
                 pert = self.pert_model.get_pert()
                 x_pert = self.pert_model.clamp_inputs(x_batch + pert)
-                x_attk = self.inner_attack.forward(x_pert.detach(), y_batch)
+                x_attk = self.inner_attack(x_pert.detach(), y_batch)
 
             # record forward pass activations
             with torch.no_grad():
