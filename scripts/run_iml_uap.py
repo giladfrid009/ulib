@@ -13,6 +13,7 @@ if str(module_dir) not in sys.path:
 from scripts.experiment import Experiment
 from ulib.attacks.iml_uap import IML_UAP, CosSim
 from ulib.activation_extractor import ActivationExtractor
+import sample_attacks
 
 
 INNER_ATTACKS = [
@@ -23,6 +24,7 @@ INNER_ATTACKS = [
     "tpgd",
     "apgd",
     "jitter",
+    "ila",
 ]
 
 
@@ -113,6 +115,8 @@ class IML_Experiment(Experiment):
                 return torchattacks.APGD(model, eps=eps, steps=args.inner_steps, loss="dlr")
             if args.inner_attack == "jitter":
                 return torchattacks.Jitter(model, eps=eps, alpha=eps / 3, steps=args.inner_steps)
+            if args.inner_attack == "ila":
+                return sample_attacks.AttackWrapper(sample_attacks.ILA(model, epsilon=eps, epoch=args.inner_steps, alpha=eps / args.inner_steps))
 
             raise ValueError(f"Unsupported inner attack method: {args.inner_attack}")
 
