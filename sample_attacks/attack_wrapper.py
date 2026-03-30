@@ -68,4 +68,4 @@ class AttackWrapper(TorchAttack):
         Returns: (N, C, H, W) tensor for adversarial images
         """
         pert = self.sample_attack.forward(inputs, labels, *args, **kwargs)
-        return torch.clamp(inputs + pert, min=0, max=1).detach()
+        return torch.clamp(inputs.to(pert.device) + pert, min=0, max=1).detach()

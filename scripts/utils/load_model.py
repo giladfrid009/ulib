@@ -20,7 +20,7 @@ class ModelName(str, Enum):
     RESNET50 = "resnet50"
     INCEPTION_V3 = "inception-v3"
     VIT = "vit-b"
-    CONV_NEXT = "convnext"
+    CONVNEXT = "convnext"
     SWIN_V2 = "swin"
     # robust models
     WONG_RESNET50 = "wong-resnet50"
@@ -28,7 +28,7 @@ class ModelName(str, Enum):
     SINGH_VIT = "singh-vit"
     MO_VIT = "mo-vit"
     MO_SWIN = "mo-swin"
-    LIU_CONV_NEXT = "liu-convnext"
+    LIU_CONVNEXT = "liu-convnext"
     LIU_SWIN = "liu-swin"
     DEB_XCIT = "deb-xcit"
     PENG_WRN50 = "peng-wrn50"
@@ -84,7 +84,7 @@ def load_model(
     if model_name == ModelName.VIT and dataset_name == DatasetName.IMAGENET:
         return load_torchvision_model("vit_b_16", device=device)
 
-    if model_name == ModelName.CONV_NEXT and dataset_name == DatasetName.IMAGENET:
+    if model_name == ModelName.CONVNEXT and dataset_name == DatasetName.IMAGENET:
         return load_torchvision_model("convnext_tiny", device=device)
 
     if model_name == ModelName.SWIN_V2 and dataset_name == DatasetName.IMAGENET:
@@ -107,7 +107,7 @@ def load_model(
     if model_name == ModelName.MO_SWIN and dataset_name == DatasetName.IMAGENET:
         return load_robust_model("Mo2022When_Swin-B", "imagenet", norm="Linf", device=device)
 
-    if model_name == ModelName.LIU_CONV_NEXT and dataset_name == DatasetName.IMAGENET:
+    if model_name == ModelName.LIU_CONVNEXT and dataset_name == DatasetName.IMAGENET:
         return load_robust_model("Liu2023Comprehensive_ConvNeXt-B", "imagenet", norm="Linf", device=device)
 
     if model_name == ModelName.LIU_SWIN and dataset_name == DatasetName.IMAGENET:

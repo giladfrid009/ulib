@@ -7,17 +7,19 @@ from ulib.pert_module import PertModule
 
 
 class MetricEvaluator(ABC):
-    def __init__(self, model: torch.nn.Module, main_metric: str | None = None, verbose: bool = True):
+    def __init__(self, model: torch.nn.Module, main_metric: str | None = None, targeted: bool = False, verbose: bool = True):
         """
         A base class for evaluators that processes batches of data and computes evaluation metrics.
 
         Args:
             model (torch.nn.Module): The model to be evaluated.
             main_metric (str | None): The primary metric to focus on during evaluation.
+            targeted (bool): Flag indicating if the evaluation is targeted.
             verbose (bool): If True, enables verbose output during evaluation.
         """
         self.model = model
         self.main_metric = main_metric
+        self.targeted = targeted
         self.verbose = verbose
         self.device = extract_device(self.model)
 
@@ -28,6 +30,7 @@ class MetricEvaluator(ABC):
         return {
             "name": self.name,
             "main_metric": self.main_metric,
+            "targeted": self.targeted,
             "verbose": self.verbose,
         }
 
@@ -103,9 +106,10 @@ class SimpleEvaluator(MetricEvaluator):
         self,
         model: torch.nn.Module,
         main_metric: str | None = None,
+        targeted: bool = False,
         verbose: bool = True,
     ):
-        super().__init__(model, main_metric, verbose)
+        super().__init__(model, main_metric, targeted, verbose)
 
     @property
     def name(self) -> str:
@@ -117,7 +121,7 @@ class SimpleEvaluator(MetricEvaluator):
 
     @property
     def default_metric(self) -> str:
-        return self.main_metric or "MR"
+        return self.main_metric or ("MR" if not self.targeted else "ACC")
 
     def eval_batch(self, data: tuple[torch.Tensor, ...]) -> dict[str, torch.Tensor]:
         x, y = data
@@ -133,9 +137,9 @@ class SimpleEvaluator(MetricEvaluator):
 
 
 class ExtendedEvaluator(MetricEvaluator):
-    def __init__(self, model: PertModule, main_metric: str | None = None, verbose: bool = True):
+    def __init__(self, model: PertModule, main_metric: str | None = None, targeted: bool = False, verbose: bool = True):
         assert isinstance(model, PertModule), "model must be a PertModule."
-        super().__init__(model, main_metric, verbose)
+        super().__init__(model, main_metric, targeted, verbose)
 
     @property
     def name(self) -> str:
@@ -154,7 +158,7 @@ class ExtendedEvaluator(MetricEvaluator):
 
     @property
     def default_metric(self) -> str:
-        return "ASR"
+        return "ASR" if not self.targeted else "R-ACC"
 
     def eval_batch(self, data: tuple[torch.Tensor, ...]) -> dict[str, torch.Tensor]:
         x, y = data

@@ -45,7 +45,8 @@ class UnivAttack(ABC):
             raise ValueError("Evaluation frequency must be greater than 0.")
 
         if evaluator is None:
-            evaluator = SimpleEvaluator(pert_model, main_metric="MR", verbose=True)
+            evaluator = SimpleEvaluator(pert_model, targeted=targeted, verbose=True)
+        evaluator.targeted = targeted
 
         self.pert_model = pert_model
         self.orig_model = pert_model.model
@@ -319,9 +320,7 @@ class OptimAttack(UnivAttack):
             self.autocast.__dict__,
         )
         if self.scheduler is not None:
-            self.metric_tracker.report_hparams(
-                "scheduler", self.scheduler.state_dict(), name=type(self.scheduler).__name__
-            )
+            self.metric_tracker.report_hparams("scheduler", self.scheduler.state_dict(), name=type(self.scheduler).__name__)
 
     def autocast_context(self, enabled: bool = True) -> torch.autocast:
         """
