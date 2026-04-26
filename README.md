@@ -278,7 +278,7 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 ### Disclaimer
 
-This project may lead to attacks on LLMs and is intended for academic research use only. It is prohibited for illegal purposes.
+This project may lead to attacks on DNNs and is intended for academic research use only. It is prohibited for illegal purposes.
 
 ---
 
