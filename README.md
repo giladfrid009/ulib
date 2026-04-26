@@ -18,7 +18,6 @@ ULib is a modular, PyTorch-based framework for generating universal adversarial 
     - [PertModule](#pertmodule)
     - [UnivAttack & OptimAttack](#univattack--optimattack)
     - [ActivationExtractor](#activationextractor)
-- [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
 
@@ -273,20 +272,13 @@ For a detailed review of all parameters and usage examples, please refer to the 
 
 ---
 
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. **Fork the Repository:** Create a personal fork and work on your feature branch.
-2. **Coding Style:** Follow PEP 8 and ensure your code is well documented.
-3. **Testing:** We would love if you include tests for new features or bug fixes.
-4. **Pull Request:** Submit a pull request with a clear description of your changes.
-
----
-
 ## License
 
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+
+### Disclaimer
+
+This project may lead to attacks on LLMs and is intended for academic research use only. It is prohibited for illegal purposes.
 
 ---
 
