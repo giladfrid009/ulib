@@ -4,6 +4,7 @@ results
 runs
 logs**
 .vscode
+*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -22,7 +22,7 @@ DEFAULT_RUN_ARGS = {
     "eval_batch": 128,
     "max_epochs": 30,
     "max_time": 400,
-    "epsilon": 16,
+    "epsilon": 10,
     "norm": float("inf"),
     "use_amp": "true",
 }
@@ -130,7 +130,7 @@ MODELS = {
     "wong-resnet50": {
         "nick": "wong-resnet50",
         "experiments": {
-            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
             # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
             # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
             # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
@@ -138,7 +138,7 @@ MODELS = {
             # "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
             # "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
             # "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
-            "ila": {**EXP_SETUP_STD, "inner_attack": "ila"},
+            # "ila": {**EXP_SETUP_STD, "inner_attack": "ila"},
         },
         # CLI Arguments
         "model": "wong-resnet50",
@@ -150,8 +150,8 @@ MODELS = {
         "experiments": {
             # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
             # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
-            # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
-            # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
+            "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
+            "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
             # "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
             # "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
             # "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
@@ -166,9 +166,9 @@ MODELS = {
     "singh-vit": {
         "nick": "singh-vit",
         "experiments": {
-            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
             # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
-            # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
+            "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
             # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
             # "tpgd": {**EXP_SETUP_STD, "inner_attack": "tpgd"},
             # "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
@@ -184,7 +184,7 @@ MODELS = {
     "liu-convnext": {
         "nick": "liu-convnext",
         "experiments": {
-            # "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
+            "fgsm": {**EXP_SETUP_FAST, "inner_attack": "fgsm"},
             # "ffgsm": {**EXP_SETUP_FAST, "inner_attack": "ffgsm"},
             # "pgd": {**EXP_SETUP_FAST, "inner_attack": "pgd"},
             # "cw": {**EXP_SETUP_FAST, "inner_attack": "cw"},
@@ -192,7 +192,7 @@ MODELS = {
             # "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
             # "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
             # "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
-            "ila": {**EXP_SETUP_STD, "inner_attack": "ila"},
+            # "ila": {**EXP_SETUP_STD, "inner_attack": "ila"},
         },
         # CLI Arguments
         "model": "liu-convnext",
@@ -208,7 +208,7 @@ MODELS = {
     "liu-swin": {
         "nick": "liu-swin",
         "experiments": {
-            # "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
+            "fgsm": {**EXP_SETUP_STD, "inner_attack": "fgsm"},
             # "ffgsm": {**EXP_SETUP_STD, "inner_attack": "ffgsm"},
             # "pgd": {**EXP_SETUP_STD, "inner_attack": "pgd"},
             # "cw": {**EXP_SETUP_STD, "inner_attack": "cw"},
@@ -216,7 +216,7 @@ MODELS = {
             # "apgd": {**EXP_SETUP_STD, "inner_attack": "apgd"},
             # "jitter": {**EXP_SETUP_STD, "inner_attack": "jitter"},
             # "fab": {**EXP_SETUP_STD, "inner_attack": "fab"},
-            "ila": {**EXP_SETUP_STD, "inner_attack": "ila"},
+            # "ila": {**EXP_SETUP_STD, "inner_attack": "ila"},
         },
         # CLI Arguments
         "model": "liu-swin",

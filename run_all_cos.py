@@ -33,7 +33,7 @@ DEFAULT_RUN_ARGS = {
 # =============================================================================
 
 EXP_SETUP_STD = dict(
-    lr=0.02, # as long as we converge, it is fine.
+    lr=0.02,  # as long as we converge, it is fine.
 )
 
 # =============================================================================
@@ -42,14 +42,6 @@ EXP_SETUP_STD = dict(
 
 MODELS = {
     # standard models
-    # "vit-b": {
-    #     "nick": "vit-b",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "vit-b",
-    # },
     "resnet50": {
         "nick": "resnet50",
         "experiments": {
@@ -66,22 +58,22 @@ MODELS = {
         # CLI Arguments
         "model": "inception-v3",
     },
-    # "convnext": {
-    #     "nick": "convnext",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "convnext",
-    # },
-    # "swin": {
-    #     "nick": "swin",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "swin",
-    # },
+    "convnext": {
+        "nick": "convnext",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "convnext",
+    },
+    "swin": {
+        "nick": "swin",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "swin",
+    },
     # robust models
     "salman-resnet50": {
         "nick": "salman-resnet50",
@@ -99,37 +91,30 @@ MODELS = {
         # CLI Arguments
         "model": "singh-vit",
     },
-    # "wong-resnet50": {
-    #     "nick": "wong-resnet50",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "wong-resnet50",
-    # },
-    # "liu-convnext": {
-    #     "nick": "liu-convnext",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "liu-convnext",
-    # },
-    # "liu-swin": {
-    #     "nick": "liu-swin",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "liu-swin",
-    # },
-    # "peng-wrn50": {
-    #     "nick": "peng-wrn50",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },        # CLI Arguments
-    #     "model": "peng-wrn50",
-    # },
+    "wong-resnet50": {
+        "nick": "wong-resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "wong-resnet50",
+    },
+    "liu-convnext": {
+        "nick": "liu-convnext",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "liu-convnext",
+    },
+    "liu-swin": {
+        "nick": "liu-swin",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "liu-swin",
+    },
 }
 
 # =============================================================================

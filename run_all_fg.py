@@ -23,7 +23,7 @@ DEFAULT_RUN_ARGS = {
     "max_epochs": 30,
     "max_time": 90,
     "patience": 10,
-    "epsilon": 16,
+    "epsilon": 10,
     "norm": float("inf"),
     "use_amp": "true",
 }
@@ -42,70 +42,70 @@ EXP_SETUP_STD = {
 
 MODELS = {
     # standard models
-    # "vit-b": {
-    #     "nick": "vit-b",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "vit-b",
-    #     "layer": "model.heads.head",
-    # },
-    # "resnet50": {
-    #     "nick": "resnet50",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "resnet50",
-    #     "layer": "model.fc",
-    # },
-    # "inception-v3": {
-    #     "nick": "inception-v3",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "inception-v3",
-    #     "layer": "model.fc",
-    # },
-    # "convnext": {
-    #     "nick": "convnext",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "convnext",
-    #     "layer": "model.classifier.2",
-    # },
-    # "swin": {
-    #     "nick": "swin",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "swin",
-    #     "layer": "model.head",
-    # },
+    "vit-b": {
+        "nick": "vit-b",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "vit-b",
+        "layer": "model.heads.head",
+    },
+    "resnet50": {
+        "nick": "resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "resnet50",
+        "layer": "model.fc",
+    },
+    "inception-v3": {
+        "nick": "inception-v3",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "inception-v3",
+        "layer": "model.fc",
+    },
+    "convnext": {
+        "nick": "convnext",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "convnext",
+        "layer": "model.classifier.2",
+    },
+    "swin": {
+        "nick": "swin",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "swin",
+        "layer": "model.head",
+    },
     # robust models
-    # "salman-resnet50": {
-    #     "nick": "salman-resnet50",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "salman-resnet50",
-    #     "layer": "model.fc",
-    # },
-    # "singh-vit": {
-    #     "nick": "singh-vit",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "singh-vit",
-    #     "layer": "model.head",
-    # },
+    "salman-resnet50": {
+        "nick": "salman-resnet50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "salman-resnet50",
+        "layer": "model.fc",
+    },
+    "singh-vit": {
+        "nick": "singh-vit",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "singh-vit",
+        "layer": "model.head",
+    },
     "wong-resnet50": {
         "nick": "wong-resnet50",
         "experiments": {
@@ -116,32 +116,32 @@ MODELS = {
         "layer": "model.fc",
         "use_amp": "false",
     },
-    # "liu-convnext": {
-    #     "nick": "liu-convnext",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "liu-convnext",
-    #     "layer": "model.head.fc",
-    # },
-    # "liu-swin": {
-    #     "nick": "liu-swin",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },
-    #     # CLI Arguments
-    #     "model": "liu-swin",
-    #     "layer": "model.head.fc",
-    # },
-    # "peng-wrn50": {
-    #     "nick": "peng-wrn50",
-    #     "experiments": {
-    #         "std": EXP_SETUP_STD,
-    #     },        # CLI Arguments
-    #     "model": "peng-wrn50",
-    #     "layer": "fc",
-    # },
+    "liu-convnext": {
+        "nick": "liu-convnext",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "liu-convnext",
+        "layer": "model.head.fc",
+    },
+    "liu-swin": {
+        "nick": "liu-swin",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },
+        # CLI Arguments
+        "model": "liu-swin",
+        "layer": "model.head.fc",
+    },
+    "peng-wrn50": {
+        "nick": "peng-wrn50",
+        "experiments": {
+            "std": EXP_SETUP_STD,
+        },        # CLI Arguments
+        "model": "peng-wrn50",
+        "layer": "fc",
+    },
 }
 
 # =============================================================================
