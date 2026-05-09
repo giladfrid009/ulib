@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from sample_attacks.utils import np
+import numpy as np
 from sample_attacks.attack import Attack
 import scipy.stats as st
 

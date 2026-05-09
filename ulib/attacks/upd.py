@@ -46,7 +46,7 @@ class L1Diff(ActivationLoss):
         return self.reduce_fn(loss)
 
 
-class IML_UAP(OptimAttack):
+class UPD(OptimAttack):
     def __init__(
         self,
         pert_model: PertModule,
@@ -125,10 +125,10 @@ class IML_UAP(OptimAttack):
                     cor_mask = ~cor_mask
 
                 not_fooled_ratio = cor_mask.float().mean().item()
-                self.metric_tracker.report_scalar("IML/not_fooled_ratio", not_fooled_ratio, step_num)
+                self.metric_tracker.report_scalar("UPD/not_fooled_ratio", not_fooled_ratio, step_num)
 
                 if not cor_mask.any():
-                    self.metric_tracker.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
+                    self.metric_tracker.report_scalar("UPD/effective_batch_ratio", 0.0, step_num)
                     return None
 
                 x_batch = x_batch[cor_mask]
@@ -154,10 +154,10 @@ class IML_UAP(OptimAttack):
                     suc_mask = ~suc_mask
 
                 sample_asr = suc_mask.float().mean().item()
-                self.metric_tracker.report_scalar("IML/sample_attack_success_ratio", sample_asr, step_num)
+                self.metric_tracker.report_scalar("UPD/sample_attack_success_ratio", sample_asr, step_num)
 
                 if not suc_mask.any():
-                    self.metric_tracker.report_scalar("IML/effective_batch_ratio", 0.0, step_num)
+                    self.metric_tracker.report_scalar("UPD/effective_batch_ratio", 0.0, step_num)
                     return None
 
                 activ = {k: v[suc_mask] for k, v in activ.items()}
@@ -166,7 +166,7 @@ class IML_UAP(OptimAttack):
         num_remaining = list(activ.values())[0].size(0)
         num_initial = data[0].size(0)
         batch_ratio = num_remaining / num_initial
-        self.metric_tracker.report_scalar("IML/effective_batch_ratio", batch_ratio, step_num)
+        self.metric_tracker.report_scalar("UPD/effective_batch_ratio", batch_ratio, step_num)
 
         loss = self.criterion(activ, adv_act)
         return loss

@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class ModelFeatureExtracter(nn.Module):
+class ModelFeatureExtractor(nn.Module):
     def __init__(self, model, layer):
         super().__init__()
         self.model = model

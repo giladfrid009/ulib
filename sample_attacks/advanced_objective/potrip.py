@@ -1,8 +1,7 @@
 import torch
 import torch.nn.functional as F
 import scipy.stats as st
-
-from sample_attacks.utils import np
+import numpy as np
 from sample_attacks.gradient.mifgsm import MIFGSM
 
 

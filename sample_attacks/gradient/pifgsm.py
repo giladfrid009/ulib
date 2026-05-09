@@ -1,5 +1,6 @@
 import torch
-from sample_attacks.utils import clamp, img_max, img_min, np
+import numpy as np
+from sample_attacks.utils import clamp, img_max, img_min
 from sample_attacks.attack import Attack
 import torch.nn.functional as F
 

@@ -1,5 +1,6 @@
 import math
-from sample_attacks.utils import clamp, img_max, img_min, torch
+import torch
+from sample_attacks.utils import clamp, img_max, img_min
 from sample_attacks.gradient.mifgsm import MIFGSM
 
 

@@ -1,6 +1,5 @@
 import torch
-
-from sample_attacks.utils import np
+import numpy as np
 from sample_attacks.gradient.mifgsm import MIFGSM
 
 

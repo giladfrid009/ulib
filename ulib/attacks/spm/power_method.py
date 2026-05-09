@@ -52,8 +52,8 @@ class PowerMethod:
         self.device = device
         self.verbose = verbose
 
-        self.eigen_vec: torch.Tensor = None
-        self.eigen_val: float = None
+        self.eigen_vec: torch.Tensor | None = None
+        self.eigen_val: float | None = None
 
     @staticmethod
     def _psi(x, p):
@@ -83,11 +83,13 @@ class PowerMethod:
     def fit(self, jac):
         self.eigen_vec, self.eigen_val = self._power_method(jac)
 
-    def get_eigen_vec(self):
+    def get_eigen_vec(self) -> torch.Tensor | None:
+        return self.eigen_vec
+
+    def get_eigen_val(self) -> float | None:
         return self.eigen_val
 
-    def get_eigen_val(self):
-        return self.eigen_val
-
-    def get_perturbation(self, shape, eps: float):
+    def get_perturbation(self, shape, eps: float) -> torch.Tensor:
+        if self.eigen_vec is None:
+            raise ValueError("Power method has not been fitted yet. Call fit() before get_perturbation().")        
         return (eps * self.eigen_vec / torch.norm(self.eigen_vec, p=self.p)).reshape(shape).detach()

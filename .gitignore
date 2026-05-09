@@ -5,6 +5,7 @@ runs
 logs**
 .vscode
 *.pdf
+run_all_transfer.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

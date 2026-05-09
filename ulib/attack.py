@@ -65,7 +65,7 @@ class UnivAttack(ABC):
             metric_tracker = MetricTracker.create(
                 time.strftime("%Y-%m-%d_%H-%M-%S"),
                 kind="wandb",
-                project="CLF-IML",
+                project="CLF-UPD",
                 root_dir="logs",
             )
 

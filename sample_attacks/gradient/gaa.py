@@ -1,6 +1,4 @@
 import torch
-import torch.nn as nn
-
 from sample_attacks.utils import clamp, img_max, img_min
 from sample_attacks.attack import Attack
 

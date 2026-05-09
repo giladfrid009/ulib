@@ -1,8 +1,5 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import time
-
 from sample_attacks.utils import clamp, img_max, img_min
 from sample_attacks.attack import Attack
 

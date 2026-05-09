@@ -11,7 +11,7 @@ if str(module_dir) not in sys.path:
     sys.path.append(str(module_dir))
 
 from scripts.experiment import Experiment
-from ulib.attacks.iml_uap import IML_UAP, CosSim
+from ulib.attacks.upd import UPD, CosSim
 from ulib.activation_extractor import ActivationExtractor
 import sample_attacks
 
@@ -28,11 +28,11 @@ INNER_ATTACKS = [
 ]
 
 
-class IML_Experiment(Experiment):
+class UPD_Experiment(Experiment):
     def add_arguments(self, parser: ArgumentParser) -> None:
-        iml_args = parser.add_argument_group("IML-UAP Attack Arguments")
+        upd_args = parser.add_argument_group("UPD Attack Arguments")
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--inner_attack",
             type=str,
             default="ffgsm",
@@ -40,21 +40,21 @@ class IML_Experiment(Experiment):
             help="The inner attack method to use for crafting the universal perturbation.",
         )
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--inner_epsilon",
             type=float,
             default=None,
             help="The maximum epsilon value for the inner attack. If not specified, then using the same epsilon as the outer attack.",
         )
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--inner_steps",
             type=int,
             default=5,
             help="The number of steps for the inner attack (if applicable).",
         )
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--lr",
             type=float,
             default=2e-2,
@@ -62,7 +62,7 @@ class IML_Experiment(Experiment):
             help="Learning rate for the adversarial trigger optimization.",
         )
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--layers",
             type=str,
             nargs="+",
@@ -71,7 +71,7 @@ class IML_Experiment(Experiment):
             help="Names of the layers to extract activations from.",
         )
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--skip_fooled",
             type=str,
             default="true",
@@ -80,7 +80,7 @@ class IML_Experiment(Experiment):
             help="Whether to skip samples that are already fooled by the universal trigger.",
         )
 
-        iml_args.add_argument(
+        upd_args.add_argument(
             "--skip_failed",
             type=str,
             default="true",
@@ -120,7 +120,7 @@ class IML_Experiment(Experiment):
 
             raise ValueError(f"Unsupported inner attack method: {args.inner_attack}")
 
-        return IML_UAP(
+        return UPD(
             pert_model=pert_model,
             optimizer=optimizer,
             criterion=criterion,
@@ -137,4 +137,4 @@ class IML_Experiment(Experiment):
 
 
 if __name__ == "__main__":
-    IML_Experiment().main()
+    UPD_Experiment().main()

@@ -2,8 +2,10 @@ import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
 from torchvision.transforms import InterpolationMode
+import torchvision.transforms as transforms
+import numpy as np
 
-from sample_attacks.utils import img_height, np, transforms
+from sample_attacks.utils import img_height
 from sample_attacks.attack import Attack
 from typing import Callable
 import scipy.stats as st

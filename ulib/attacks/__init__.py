@@ -8,7 +8,7 @@ from ulib.attacks.du_attack import DU_ATTACK
 from ulib.attacks.fff import FFF
 from ulib.attacks.fg_uap import FG_UAP
 from ulib.attacks.gd_uap import GD_UAP
-from ulib.attacks.iml_uap import IML_UAP
+from ulib.attacks.upd import UPD
 from ulib.attacks.uap import UAP
 from ulib.attacks.uapgd import UAPGD, MIPGD
 from ulib.attacks.usgd import USGD
@@ -24,7 +24,7 @@ __all__ = [
     "FFF",
     "FG_UAP",
     "GD_UAP",
-    "IML_UAP",
+    "UPD",
     "UAP",
     "UAPGD",
     "MIPGD",

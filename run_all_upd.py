@@ -10,12 +10,12 @@ import gc
 # Global Constants & Configuration
 # =============================================================================
 
-PROJECT_NAME = "VISION_IML_UAP_IAPS"
-SCRIPT_PATH = "scripts/run_iml_uap.py"
+PROJECT_NAME = "VISION_UPD"
+SCRIPT_PATH = "scripts/run_upd_uap.py"
 
 # Default Arguments shared across all runs unless overridden
 DEFAULT_RUN_ARGS = {
-    "log_dir": "logs-iml",
+    "log_dir": "logs-upd",
     "dataset": "imagenet",
     "evaluator": "simple",
     "train_batch": 128,
@@ -332,7 +332,7 @@ def run_experiment(model_key: str, iteration: int, total_iters: int, name_suffix
 # =============================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run consolidated IML experiments.")
+    parser = argparse.ArgumentParser(description="Run consolidated UPD experiments.")
     parser.add_argument("--models", nargs="+", default=["all"], help="List of model keys to run, or 'all'")
     parser.add_argument("--name_suffix", type=str, default="", help="Suffix to append to experiment names.")
     parser.add_argument("--iters", type=int, default=1, help="Number of iterations to run each experiment.")
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 
     target_models = list(MODELS.keys()) if "all" in args.models else args.models
 
-    print(f"🚀 Starting IML Runs for models: {target_models}")
+    print(f"🚀 Starting UPD Runs for models: {target_models}")
     print(f"📋 Global Default Args: {DEFAULT_RUN_ARGS}")
 
     for model_key in target_models:

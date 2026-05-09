@@ -110,7 +110,7 @@ class TensorLoader:
             **kwargs: Additional arguments for TensorLoader constructor.
         """
         if size is not None and size < len(ds):
-            indices = torch.tensor(random.sample(range(len(ds)), k=size), dtype=torch.int64)
+            indices = random.sample(range(len(ds)), k=size)
             ds = Subset(ds, indices)
 
         tensor_lists = []

@@ -1,9 +1,7 @@
 import torch
-
-from sample_attacks.utils import np
+import numpy as np
 from sample_attacks.attack import Attack
 import scipy.stats as st
-from torch.autograd import Variable
 import torch.nn.functional as F
 
 
