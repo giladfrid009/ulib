@@ -26,10 +26,6 @@ class SMIFGRM(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, beta=1.5, num_neighbor=12, epoch=10, decay=1., rescale_factor=2
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/smifgrm/resnet50 --attack smifgrm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/smifgrm/resnet50 --eval
     """
 
     def __init__(

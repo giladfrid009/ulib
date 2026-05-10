@@ -47,10 +47,6 @@ class TRAP(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, beta=0.8, epoch=300, baseline_epoch=150, feature_layer='layer3', probb=0.9, coeff=0.8 decay=1.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/trap/resnet50 --attack trap --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/trap/resnet50 --eval
     """
 
     def __init__(

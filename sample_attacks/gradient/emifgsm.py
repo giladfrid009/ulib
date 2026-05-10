@@ -25,10 +25,6 @@ class EMIFGSM(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1., num_sample=11, radius=7, sample_method='linear'
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/emifgsm/resnet50 --attack emifgsm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/emifgsm/resnet50 --eval
     """
 
     def __init__(

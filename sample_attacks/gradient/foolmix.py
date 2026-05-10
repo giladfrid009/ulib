@@ -27,10 +27,6 @@ class Foolmix(Attack):
         beta (float): the strength parameter for random other-class labels (default: 1.0).
         gamma (float): the perturbation direction update parameter (default: 0.1).
         print_timing (bool): whether to print detailed timing statistics (default: True).
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/foolmix/resnet50 --attack foolmix --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/foolmix/resnet50 --eval
     """
 
     def __init__(

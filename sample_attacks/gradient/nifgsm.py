@@ -22,10 +22,6 @@ class NIFGSM(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/nifgsm/resnet50 --attack nifgsm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/nifgsm/resnet50 --eval
     """
 
     def __init__(

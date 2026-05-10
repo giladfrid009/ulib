@@ -27,10 +27,6 @@ class FGSRA(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, rho=0.7, beta=2.0, max_iter=20
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fgsra/resnet50 --attack fgsra --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fgsra/resnet50 --eval
     """
 
     def __init__(

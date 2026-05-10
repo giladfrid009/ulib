@@ -25,10 +25,6 @@ class Fuzziness_Tuned(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=1.6/255, epoch=10, decay=1, K=1.0, T=2.0.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fuzziness_tuned/resnet50 --attack fuzziness_tuned --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fuzziness_tuned/resnet50 --eval
     """
 
     def __init__(

@@ -25,10 +25,6 @@ class MIG(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=0.64/255, epoch=25, decay=1., s_factor=20,
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/mig/resnet50 --attack mig --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/mig/resnet50 --eval
     """
 
     def __init__(

@@ -24,10 +24,6 @@ class GRA(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, beta=3.5, num_neighbor=20, epoch=10, decay=1.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/gra/resnet50 --attack gra --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/gra/resnet50 --eval
     """
 
     def __init__(

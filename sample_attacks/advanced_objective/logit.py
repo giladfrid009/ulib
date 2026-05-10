@@ -23,10 +23,6 @@ class LOGIT(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=2.0/255, epoch=300, decay=1.0
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/logit/resnet50_targeted --attack logit --model=resnet50 --targeted
-        python main.py --input_dir ./path/to/data --output_dir adv_data/logit/resnet50_targeted --eval --targeted
     """
 
     def __init__(

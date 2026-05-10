@@ -27,10 +27,6 @@ class AIFGTM(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1., beta_1=0.9, beta_2=0.99, lam=1.3, mu_1=1.5, mu_2=1.9
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/aifgtm/resnet50 --attack aifgtm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/aifgtm/resnet50 --eval
     """
 
     def __init__(

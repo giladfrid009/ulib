@@ -37,10 +37,6 @@ class FTM(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=2/255, epoch=300, decay=1.0, prob=1.0, targeted=True
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/ftm/resnet50 --attack ftm --model resnet50 --targeted
-        python main.py --input_dir ./path/to/data --output_dir adv_data/ftm/resnet50 --eval --targeted
     """
 
     def __init__(

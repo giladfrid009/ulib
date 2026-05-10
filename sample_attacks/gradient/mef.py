@@ -27,10 +27,6 @@ class MEF(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, num_neighbor=20, gamma=2., kesai=0.15, epoch=20, inner_decay=0.9, decay=0.5.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/mef/resnet50 --attack mef --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/mef/resnet50 --eval
     """
 
     def __init__(

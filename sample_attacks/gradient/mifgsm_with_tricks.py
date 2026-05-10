@@ -33,10 +33,6 @@ class RGMIFGSM(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1., pre_epoch=5, s=10
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/rgmifgsm/resnet18 --attack rgmifgsm --model=resnet18
-        python main.py --input_dir ./path/to/data --output_dir adv_data/rgmifgsm/resnet18 --eval
     """
 
     def __init__(
@@ -133,10 +129,6 @@ class DualMIFGSM(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/dual_mifgsm/resnet18 --attack dual_mifgsm --model=resnet18
-        python main.py --input_dir ./path/to/data --output_dir adv_data/dual_mifgsm/resnet18 --eval
     """
 
     def __init__(
@@ -225,10 +217,6 @@ class Ens_FGSM_MIFGSM(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/ens_mifgsm/resnet18 --attack ens_mifgsm --model=resnet18
-        python main.py --input_dir ./path/to/data --output_dir adv_data/ens_mifgsm/resnet18 --eval
     """
 
     def __init__(

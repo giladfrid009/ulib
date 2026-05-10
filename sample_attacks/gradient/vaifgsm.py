@@ -23,10 +23,6 @@ class VAIFGSM(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=0.007, epoch=20, aux_num=3
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/vaifgsm/resnet50 --attack vaifgsm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/vaifgsm/resnet50 --eval
     """
 
     def __init__(

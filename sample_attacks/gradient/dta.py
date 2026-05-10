@@ -23,10 +23,6 @@ class DTA(Attack):
         u (float): decay factor for gradient
         K (int): number of iterations
         device (torch.device): the device for data. If it is None, the device would be same as model
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/dta/resnet50 --attack dta --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/dta/resnet50 --eval
     """
 
     def __init__(

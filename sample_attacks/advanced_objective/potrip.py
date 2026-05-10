@@ -29,20 +29,6 @@ class POTRIP(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=0.8/255, epoch=20, decay=1., lamb = 0.01, gamma = 0.007, diversity_prob=0.7, kernel_size=5
-
-    To reproduce results of the original paper, please change settings as follows:
-        in attack.py:
-            model = models.__dict__[model](pretrained=True)
-
-        in utils.py:
-            img_height, img_width = 299, 299
-            def load_pretrained_model(cnn_model=[], vit_model=[]):
-                for model in cnn_model:
-                    yield model, models.__dict__[model](pretrained=True)
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/potrip/resnet50_targeted --attack potrip --model=resnet50 --targeted
-        python main.py --input_dir ./path/to/data --output_dir adv_data/potrip/resnet50_targeted --eval --targeted
     """
 
     def __init__(

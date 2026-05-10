@@ -29,10 +29,6 @@ class FIA(MIFGSM):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1., num_scale=10
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fia/resnet50 --attack fia --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fia/resnet50 --eval
     """
 
     def __init__(

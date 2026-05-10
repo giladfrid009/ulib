@@ -39,10 +39,6 @@ class ILA(Attack):
 
     Official arguments:
         epsilon=16/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=1., coeff=1.0
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/ila/resnet50 --attack ila --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/ila/resnet50 --eval
     """
 
     def __init__(

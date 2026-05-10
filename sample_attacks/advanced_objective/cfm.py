@@ -31,10 +31,6 @@ class CFM(Attack):
 
     Official arguments:
         epsilon=0.07, alpha=epsilon/epoch=0.007, epoch=300, decay=1.
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/cfm/resnet18_targeted --attack cfm --model=resnet18 --targeted
-        python main.py --input_dir ./path/to/data --output_dir adv_data/cfm/resnet18_targeted --eval --targeted
     """
 
     def __init__(

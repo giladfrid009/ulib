@@ -22,10 +22,6 @@ class GAA(Attack):
         lambda_param (float): hyperparameter for gradient aggregation
         xi (float): upper bound of random sampling in xi-ball
         N (int): number of randomly sampled examples
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/gaa/resnet50 --attack gaa --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/gaa/resnet50 --eval
     """
 
     def __init__(

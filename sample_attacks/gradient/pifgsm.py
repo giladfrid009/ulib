@@ -27,10 +27,6 @@ class PIFGSM(Attack):
 
     Official arguments:
         epsilon=16.0/255, alpha=epsilon/epoch=1.6/255, epoch=10, decay=0., kern_size=3, gamma=16.0, beta=10.0
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/pifgsm/resnet50 --attack pifgsm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/pifgsm/resnet50 --eval
     """
 
     def __init__(

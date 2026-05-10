@@ -19,10 +19,6 @@ class FGSM(Attack):
 
     Official arguments:
         epsilon=16/255
-
-    Example script:
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fgsm/resnet50 --attack fgsm --model=resnet50
-        python main.py --input_dir ./path/to/data --output_dir adv_data/fgsm/resnet50 --eval
     """
 
     def __init__(self, model: torch.nn.Module, epsilon=16 / 255, targeted=False, random_start=False, norm="linfty", loss="crossentropy", device=None, **kwargs):
