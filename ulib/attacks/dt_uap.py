@@ -14,18 +14,26 @@ class DTLoss(torch.nn.Module):
 
     def forward(
         self,
-        clean_activ: torch.Tensor,
+        uap_activ: torch.Tensor,
         adv_activ: torch.Tensor,
-        clean_logits: torch.Tensor,
+        adv_logits: torch.Tensor,
         targets: torch.Tensor,
     ) -> torch.Tensor:
+        """
+        Compute the loss for the DT_UAP attack.
+        
+        Args:
+            uap_activ (torch.Tensor): Activations only from the UAP, `f_l(v)` from the paper.
+            adv_activ (torch.Tensor): Activations from the perturbed inputs, `f_l(alpha * x + v)` from the paper.
+            adv_logits (torch.Tensor): Logits from the perturbed inputs, `f(alpha * x + v)` from the paper.
+            targets (torch.Tensor): Target labels for the attack, `y_target` from the paper.
+        """
         if self.targeted:
-            mse_loss = self.mse_loss(clean_activ, adv_activ)
-            ce_loss = self.ce_loss(clean_logits, targets)
+            mse_loss = self.mse_loss(uap_activ, adv_activ)
+            ce_loss = self.ce_loss(adv_logits, targets)
             return mse_loss + self.gamma * ce_loss
 
-        # TODO: WHAT SHOULD THE LOSS BE IN THE UNTARGETED CASE?
-        return self.mse_loss(clean_activ, adv_activ)
+        return self.mse_loss(uap_activ, adv_activ)
 
 
 class DT_UAP(OptimAttack):
@@ -45,7 +53,7 @@ class DT_UAP(OptimAttack):
         optimizer: torch.optim.Optimizer,
         activ_extractor: ActivationExtractor,
         alpha_step_size: float = 1e-4,
-        targeted: bool = False,
+        targeted: bool = True,
         **kwargs,
     ):
         if alpha_step_size <= 0:
@@ -83,10 +91,10 @@ class DT_UAP(OptimAttack):
         x_batch, y_batch = data
 
         with self.extractor.capture():
-            logits = self.pert_model(alpha * x_batch)
+            adv_logits = self.pert_model(alpha * x_batch)
             adv_activ = self.extractor.get_activations()
-            self.orig_model(torch.zeros_like(x_batch))
-            clean_activ = self.extractor.get_activations()
+            self.pert_model(torch.zeros_like(x_batch))
+            uap_activ = self.extractor.get_activations()
 
-        loss = self.criterion(clean_activ, adv_activ, logits, y_batch)
+        loss = self.criterion(uap_activ, adv_activ, adv_logits, y_batch)
         return loss

@@ -71,9 +71,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
             grad_norm = grad_norm.reshape(-1, 1, 1, 1)
 
             momentum = self.decay * momentum - grad / grad_norm
-            momentum_norm = (
-                torch.norm(momentum.view(momentum.size(0), -1), p=2, dim=1) + torch.finfo(momentum.dtype).eps
-            )
+            momentum_norm = torch.norm(momentum.view(momentum.size(0), -1), p=2, dim=1) + torch.finfo(momentum.dtype).eps
             momentum_norm = momentum_norm.reshape(-1, 1, 1, 1)
 
             adv_images = adv_images - self.alpha * momentum / momentum_norm
@@ -84,7 +82,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
 
 
 # TODO: IMPLEMENT DATA-FREE AND DATA-DEPENDENT VERSIONS
-# TODO: IMPLEMENT TARGETED VARSION
+# TODO: IMPLEMENT TARGETED VERSION
 class AE_UAP(OptimAttack):
     """
     ## Reference:
