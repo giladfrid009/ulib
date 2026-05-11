@@ -27,6 +27,7 @@ class Cosine_UAP(OptimAttack):
             pert_model=pert_model,
             optimizer=optimizer,
             criterion=CosineSimilarity(),
+            targeted=False,
             **kwargs,
         )
 
@@ -41,6 +42,4 @@ class Cosine_UAP(OptimAttack):
         preds_adv = self.pert_model(x_batch)
         preds_clean = self.orig_model(x_batch)
         loss = self.criterion(preds_adv, preds_clean)
-        if self.targeted:
-            loss = -loss
         return loss

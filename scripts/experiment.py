@@ -68,7 +68,7 @@ class Experiment(ABC):
             metavar="DATASET",
             help=f"The datasets to use. Available datasets: {SUPPORTED_DATASETS}",
         )
-        
+
         parser.add_argument(
             "--target_class",
             type=int,
@@ -290,7 +290,7 @@ class Experiment(ABC):
             logger.info(f"Evaluating on test dataset: {ds_name}")
 
             if self.targeted:
-                logger.info(f"Overwriting labels with target class {args.target_class} for targeted evaluation.")
+                logger.info(f"Overwriting labels with target class {args.target_class} for targeted mode.")
                 dl_test.tensors[-1].fill_(args.target_class)
 
             test_metrics = evaluator.evaluate(dl_test)
@@ -314,7 +314,7 @@ class Experiment(ABC):
                 args.dataset,
                 f"L_{args.norm}",
                 f"Eps_{args.epsilon}",
-                f"target_{args.target_class if self.targeted else 'untargeted'}",
+                f"target_{args.target_class}" if self.targeted else "untargeted",
                 args.run_name,
                 kind="wandb",
                 root_dir=args.log_dir,
@@ -330,9 +330,9 @@ class Experiment(ABC):
             logger.info(f"Loading dataset: {args.dataset}")
             dl_train, dl_eval, dl_test = load_dataset(args.dataset, ds_transform, args.train_batch, args.eval_batch)
             logger.info(f"Loaded datasets with sample counts: (train, val, test) = ({dl_train.total}, {dl_eval.total}, {dl_test.total}).")
-            
+
             if self.targeted:
-                logger.info(f"Overwriting labels with target class {args.target_class} for targeted attack.")
+                logger.info(f"Overwriting labels with target class {args.target_class} for targeted mode.")
                 dl_train.tensors[-1].fill_(args.target_class)
                 dl_eval.tensors[-1].fill_(args.target_class)
                 dl_test.tensors[-1].fill_(args.target_class)

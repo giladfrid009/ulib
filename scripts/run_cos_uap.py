@@ -29,6 +29,9 @@ class Cos_Experiment(Experiment):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
 
+        if self.targeted:
+            raise ValueError("Cosine_UAP does not support targeted attacks.")
+
         return Cosine_UAP(
             pert_model=pert_model,
             optimizer=optimizer,
@@ -37,7 +40,6 @@ class Cos_Experiment(Experiment):
             evaluator=evaluator,
             mixed_precision=mixed_precision,
             metric_tracker=metric_tracker,
-            targeted=self.targeted,
         )
 
 
