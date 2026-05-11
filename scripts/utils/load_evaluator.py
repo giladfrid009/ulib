@@ -18,11 +18,12 @@ def load_evaluator(
     name: str,
     pert_module: PertModule,
     main_metric: str | None = None,
+    targeted: bool = False,
 ) -> MetricEvaluator:
     if name == EvalName.SIMPLE:
-        return SimpleEvaluator(pert_module, main_metric=main_metric, verbose=True)
+        return SimpleEvaluator(pert_module, main_metric=main_metric, targeted=targeted, verbose=True)
 
     if name == EvalName.EXTENDED:
-        return ExtendedEvaluator(pert_module, main_metric=main_metric, verbose=True)
+        return ExtendedEvaluator(pert_module, main_metric=main_metric, targeted=targeted, verbose=True)
 
     raise ValueError(f"Unsupported evaluator name: {name}.")

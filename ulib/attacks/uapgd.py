@@ -68,7 +68,7 @@ class MIPGD(torchattacks.attack.Attack):
         self.beta = beta
         self.gamma = gamma
         self.steps = steps
-        self.supported_mode = ["default"]
+        self.supported_mode = ["default", "targeted"]
 
         assert self.eps >= 0, "perturbation norm must be positive"
         assert self.alpha >= 0, "learning rate must be positive"
@@ -100,6 +100,10 @@ class MIPGD(torchattacks.attack.Attack):
                     break
 
                 cost = loss_fn(outputs, labels)
+                
+                if self.targeted:
+                    cost = -cost
+                
                 grad = torch.autograd.grad(cost, adv_images, retain_graph=False, create_graph=False)[0]
 
             # Update the universal perturbation
@@ -134,13 +138,17 @@ class UAPGD(UnivAttack):
         inner_attack: MIPGD,
         alpha_sched: ValueScheduler | None = None,
         sched_on_batch: bool = False,
+        targeted=False,
         **kwargs,
     ):
         super().__init__(
             pert_model=pert_model,
-            targeted=False,
+            targeted=targeted,
             **kwargs,
         )
+        
+        if self.targeted:
+            inner_attack.set_mode_targeted_by_function(lambda inp, lbl: lbl)
 
         self.inner_attack = inner_attack
         self.alpha_sched = alpha_sched
@@ -180,8 +188,13 @@ class UAPGD(UnivAttack):
         # attack only correctly classified samples
         y_pred = self.pert_model(x_batch).argmax(dim=1)
         cor_mask = y_pred == y_batch
+        
+        if self.targeted:
+            cor_mask = ~cor_mask
+        
         if not cor_mask.any():
             return None
+        
         x_batch = x_batch[cor_mask]
         y_batch = y_batch[cor_mask]
 
@@ -193,8 +206,13 @@ class UAPGD(UnivAttack):
         # use only successfully attacked samples
         y_attk = self.orig_model(x_attk).argmax(dim=1)
         suc_mask = y_attk != y_batch
+        
+        if self.targeted:
+            suc_mask = ~suc_mask
+        
         if not suc_mask.any():
             return None
+        
         x_attk = x_attk[suc_mask]
         x_pert = x_pert[suc_mask]
 

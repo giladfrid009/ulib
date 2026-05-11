@@ -39,6 +39,10 @@ class Experiment(ABC):
             raise ValueError("Arguments have not been parsed yet. Call _parse_args() first.")
         return self._parsed_args
 
+    @property
+    def targeted(self) -> bool:
+        return self.args().target_class is not None
+
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """Override to add custom command line arguments."""
         pass
@@ -63,6 +67,14 @@ class Experiment(ABC):
             default="imagenet",
             metavar="DATASET",
             help=f"The datasets to use. Available datasets: {SUPPORTED_DATASETS}",
+        )
+        
+        parser.add_argument(
+            "--target_class",
+            type=int,
+            default=None,
+            metavar="INT",
+            help="The target class index for targeted attacks. If not specified, the attack will be untargeted.",
         )
 
         parser.add_argument(
@@ -269,13 +281,17 @@ class Experiment(ABC):
         if args.dataset not in dataset_names:
             dataset_names.append(args.dataset)
 
-        evaluator = ExtendedEvaluator(univ_attack.pert_model)
+        evaluator = ExtendedEvaluator(univ_attack.pert_model, targeted=self.targeted)
         logger.info(f"Running final evaluation on datasets: {dataset_names}")
 
         for ds_name in dataset_names:
             _, _, dl_test = load_dataset(ds_name, ds_transform, args.train_batch, args.eval_batch)
             logger.info(f"Loaded test dataset: {ds_name} with {dl_test.total} samples.")
             logger.info(f"Evaluating on test dataset: {ds_name}")
+
+            if self.targeted:
+                logger.info(f"Overwriting labels with target class {args.target_class} for targeted evaluation.")
+                dl_test.tensors[-1].fill_(args.target_class)
 
             test_metrics = evaluator.evaluate(dl_test)
             test_metrics = {f"{ds_name}/{k}": v for k, v in test_metrics.items()}
@@ -298,6 +314,7 @@ class Experiment(ABC):
                 args.dataset,
                 f"L_{args.norm}",
                 f"Eps_{args.epsilon}",
+                f"target_{args.target_class if self.targeted else 'untargeted'}",
                 args.run_name,
                 kind="wandb",
                 root_dir=args.log_dir,
@@ -313,6 +330,12 @@ class Experiment(ABC):
             logger.info(f"Loading dataset: {args.dataset}")
             dl_train, dl_eval, dl_test = load_dataset(args.dataset, ds_transform, args.train_batch, args.eval_batch)
             logger.info(f"Loaded datasets with sample counts: (train, val, test) = ({dl_train.total}, {dl_eval.total}, {dl_test.total}).")
+            
+            if self.targeted:
+                logger.info(f"Overwriting labels with target class {args.target_class} for targeted attack.")
+                dl_train.tensors[-1].fill_(args.target_class)
+                dl_eval.tensors[-1].fill_(args.target_class)
+                dl_test.tensors[-1].fill_(args.target_class)
 
             pert_model = PertModule(
                 model,
@@ -322,7 +345,7 @@ class Experiment(ABC):
                 random_init=(args.random_init == "true"),
             )
 
-            evaluator = load_evaluator(args.evaluator, pert_model, main_metric=args.eval_metric)
+            evaluator = load_evaluator(args.evaluator, pert_model, targeted=self.targeted, main_metric=args.eval_metric)
 
             logger.info("Initializing attack...")
             univ_attack = self.initialize_attack(
@@ -339,6 +362,7 @@ class Experiment(ABC):
                 dataset=args.dataset,
                 norm=pert_model.norm,
                 eps=f"{args.epsilon}",
+                target=args.target_class if self.targeted else "untargeted",
             )
 
             if main_file := getattr(sys.modules.get("__main__"), "__file__", None):

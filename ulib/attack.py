@@ -220,7 +220,7 @@ class UnivAttack(ABC):
         self.pert_model.set_pert(self.best_pert)
 
         # Final evaluation
-        extra_evaluator = ExtendedEvaluator(self.pert_model, verbose=True)
+        extra_evaluator = ExtendedEvaluator(self.pert_model, targeted=self.targeted, verbose=True)
         metrics = extra_evaluator.evaluate(dl_eval)
         metrics = {k: round(v, 4) for k, v in metrics.items()}
         self.metric_tracker.report_globals(metrics)

@@ -47,6 +47,7 @@ class USGD_Experiment(Experiment):
             eval_freq=eval_freq,
             evaluator=evaluator,
             metric_tracker=metric_tracker,
+            targeted=self.targeted,
         )
 
 

@@ -48,6 +48,7 @@ class FG_Experiment(Experiment):
             evaluator=evaluator,
             mixed_precision=mixed_precision,
             metric_tracker=metric_tracker,
+            targeted=self.targeted,
         )
 
 
