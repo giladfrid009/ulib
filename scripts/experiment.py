@@ -194,7 +194,10 @@ class Experiment(ABC):
 
         pert_args.add_argument(
             "--random_init",
-            action="store_true",
+            type=str,
+            default="false",
+            choices=["true", "false"],
+            metavar="BOOL",
             help="If set, the perturbation will be randomly initialized within the epsilon-ball.",
         )
 
@@ -277,7 +280,7 @@ class Experiment(ABC):
             test_metrics = evaluator.evaluate(dl_test)
             test_metrics = {f"{ds_name}/{k}": v for k, v in test_metrics.items()}
             metric_tracker.report_globals(test_metrics)
-            
+
             df = pd.DataFrame([test_metrics])
             df.to_csv(f"{log_dir}/{ds_name}_results.csv", index=False)
             logger.info(f"Saved evaluation results to '{log_dir}/'.")
@@ -301,9 +304,9 @@ class Experiment(ABC):
                 project=args.project_name,
                 disabled=args.test_run,
             )
-            
+
             metric_tracker = stack.enter_context(metric_tracker)
-            
+
             logger.info(f"Loading model: {args.model}")
             model, ds_transform = load_model(args.model, args.dataset, device="cuda:0")
 
@@ -316,7 +319,7 @@ class Experiment(ABC):
                 data_shape=dl_train.get_tensor(0).shape[1:],
                 eps=args.epsilon / 255.0,
                 norm=args.norm,
-                random_init=args.random_init,
+                random_init=(args.random_init == "true"),
             )
 
             evaluator = load_evaluator(args.evaluator, pert_model, main_metric=args.eval_metric)

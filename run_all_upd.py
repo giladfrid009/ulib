@@ -11,7 +11,7 @@ import gc
 # =============================================================================
 
 PROJECT_NAME = "VISION_UPD"
-SCRIPT_PATH = "scripts/run_upd_uap.py"
+SCRIPT_PATH = "scripts/run_upd.py"
 
 # Default Arguments shared across all runs unless overridden
 DEFAULT_RUN_ARGS = {
