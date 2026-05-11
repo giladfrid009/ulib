@@ -20,6 +20,7 @@ class FG_UAP(OptimAttack):
         optimizer: torch.optim.Optimizer,
         activ_extractor: ActivationExtractor,
         skip_already_fooled: bool = False,
+        targeted: bool = False,
         **kwargs,
     ):
         criterion = ActivationLoss(loss_fn=lambda v1, v2: torch.cosine_similarity(v1.flatten(1), v2.flatten(1), dim=-1))
@@ -28,6 +29,7 @@ class FG_UAP(OptimAttack):
             pert_model=pert_model,
             optimizer=optimizer,
             criterion=criterion,
+            targeted=targeted,
             **kwargs,
         )
 
@@ -46,11 +48,11 @@ class FG_UAP(OptimAttack):
     ) -> torch.Tensor | None:
         x_batch, y_batch = data
         with self.extractor.capture():
-            preds = self.pert_model(x_batch)
+            adv_preds: torch.Tensor = self.pert_model(x_batch)
             adv_activ = self.extractor.get_activations()
 
             if self.skip_already_fooled:
-                cor_mask = preds.argmax(dim=-1) == y_batch
+                cor_mask = adv_preds.argmax(dim=-1) == y_batch
                 if not cor_mask.any():
                     return None
                 x_batch = x_batch[cor_mask]
@@ -60,6 +62,9 @@ class FG_UAP(OptimAttack):
             clean_activ = self.extractor.get_activations()
 
         loss = self.criterion(clean_activ, adv_activ)
+        
         if self.targeted:
-            loss = -loss
+            # maximize logits of the target class
+            loss = loss - adv_preds.gather(dim=1, index=y_batch.unsqueeze(1)).mean()
+            
         return loss

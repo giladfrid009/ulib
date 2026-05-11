@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 from typing import Callable
 import inspect
 
@@ -11,7 +10,8 @@ from ulib.attack import UnivAttack
 class UAP(UnivAttack):
     """
     ## Reference:
-        Presented in "Universal adversarial perturbations": https://arxiv.org/abs/1610.08401
+        - When `targeted=False`: Presented in "Universal adversarial perturbations": https://arxiv.org/abs/1610.08401
+        - When `targeted=True`: Presented in "Simple iterative method for generating targeted universal adversarial perturbations": https://arxiv.org/pdf/1911.06502
 
     Args:
         inner_attack (torchattacks.attack.Attack): Inner attack to use for generating adversarial examples.
@@ -21,11 +21,12 @@ class UAP(UnivAttack):
         self,
         pert_model: PertModule,
         inner_attack: TorchAttack | Callable[[torch.nn.Module, int], TorchAttack],
+        targeted=False,
         **kwargs,
     ):
         super().__init__(
             pert_model=pert_model,
-            targeted=False,
+            targeted=targeted,
             **kwargs,
         )
 
@@ -71,11 +72,20 @@ class UAP(UnivAttack):
 
         x_batch, y_batch = data
 
-        # attack only correctly classified samples
+        # attack only non-fooled samples
         y_pred = self.pert_model(x_batch).argmax(dim=1)
         cor_mask = y_pred == y_batch
+
+        if self.targeted:
+            cor_mask = ~cor_mask
+        
+        not_fooled_ratio = cor_mask.float().mean().item()
+        self.metric_tracker.report_scalar("UAP/not_fooled_ratio", not_fooled_ratio, step_num)
+
         if not cor_mask.any():
+            self.metric_tracker.report_scalar("UAP/effective_batch_ratio", 0.0, step_num)
             return None
+  
         x_batch = x_batch[cor_mask]
         y_batch = y_batch[cor_mask]
 
@@ -87,10 +97,24 @@ class UAP(UnivAttack):
         # use only successfully attacked samples
         y_attk = self.orig_model(x_attk).argmax(dim=1)
         suc_mask = y_attk != y_batch
+        
+        if self.targeted:
+            suc_mask = ~suc_mask
+                    
+        sample_asr = suc_mask.float().mean().item()
+        self.metric_tracker.report_scalar("UAP/sample_attack_success_ratio", sample_asr, step_num)
+
         if not suc_mask.any():
+            self.metric_tracker.report_scalar("UAP/effective_batch_ratio", 0.0, step_num)
             return None
+        
         x_attk = x_attk[suc_mask]
         x_pert = x_pert[suc_mask]
+
+        num_remaining = x_pert.size(0)
+        num_initial = data[0].size(0)
+        batch_ratio = num_remaining / num_initial
+        self.metric_tracker.report_scalar("UAP/effective_batch_ratio", batch_ratio, step_num)
 
         delta = torch.sum(x_attk - x_pert, dim=0, keepdim=True)
 

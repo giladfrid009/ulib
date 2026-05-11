@@ -38,7 +38,7 @@ class DF_UAP(OptimAttack):
         pert_model: PertModule,
         optimizer: torch.optim.Optimizer,
         kappa: float = 0.0,
-        targeted: bool = False,
+        targeted: bool = True,
         **kwargs,
     ):
         super().__init__(
