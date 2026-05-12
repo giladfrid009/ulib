@@ -62,7 +62,7 @@ class DT_UAP(OptimAttack):
         super().__init__(
             pert_model=pert_model,
             optimizer=optimizer,
-            criterion=DTLoss(targeted=targeted),
+            criterion=DTLoss(targeted=targeted, gamma=1.0),
             targeted=targeted,
             **kwargs,
         )

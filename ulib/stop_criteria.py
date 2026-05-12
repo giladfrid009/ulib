@@ -9,7 +9,7 @@ class StopCriteria:
     def __init__(
         self,
         max_epochs: int = 100,
-        max_evals: int | None = None,
+        max_steps: int | None = None,
         max_time: float | None = None,
         target_value: float | None = None,
         patience: int | None = None,
@@ -20,7 +20,7 @@ class StopCriteria:
 
         Args:
             max_epochs: Maximum number of epochs.
-            max_evals: Maximum number of evaluation steps.
+            max_steps: Maximum number of steps.
             max_time: Maximum training time in seconds.
             target_value: Target value to stop training when reached. This value should be maximized.
             patience: Number of evaluation steps without sufficient improvement.
@@ -31,8 +31,8 @@ class StopCriteria:
         """
         if max_epochs <= 0:
             raise ValueError("Max epochs must be greater than 0.")
-        if max_evals is not None and max_evals <= 0:
-            raise ValueError("Max evals must be greater than 0.")
+        if max_steps is not None and max_steps <= 0:
+            raise ValueError("Max steps must be greater than 0.")
         if max_time is not None and max_time <= 0:
             raise ValueError("Max time must be greater than 0.")
         if patience is not None and patience <= 0:
@@ -41,7 +41,7 @@ class StopCriteria:
             raise ValueError("Patience delta must be greater than or equal to 0.")
 
         self.max_epochs = max_epochs
-        self.max_evals = max_evals
+        self.max_steps = max_steps
         self.max_time = max_time
         self.target_value = target_value
         self.patience = patience
@@ -49,7 +49,7 @@ class StopCriteria:
 
         # Internal state
         self._epoch = 0
-        self._total_evals = 0
+        self._total_steps = 0
         self._start_time = time.time()
         self._best_value = -float("inf")
         self._patience_counter = 0
@@ -58,7 +58,7 @@ class StopCriteria:
     def get_hparams(self) -> dict:
         return {
             "max_epochs": self.max_epochs,
-            "max_evals": self.max_evals,
+            "max_steps": self.max_steps,
             "max_time": self.max_time,
             "target_value": self.target_value,
             "patience": self.patience,
@@ -68,15 +68,15 @@ class StopCriteria:
     def reset(self) -> None:
         """Reset internal state."""
         self._epoch = 0
-        self._total_evals = 0
+        self._total_steps = 0
         self._start_time = time.time()
         self._best_value = -float("inf")
         self._patience_counter = 0
 
-    def update(self, epoch: int, value: float | None) -> None:
+    def update(self, epoch: int, value: float | None, step_inc: int = 1) -> None:
         """Update internal state with new metrics."""
         self._epoch = epoch
-        self._total_evals += 1
+        self._total_steps += step_inc
 
         if value is not None:
             if (value - self._best_value) >= self.patience_delta:
@@ -95,8 +95,8 @@ class StopCriteria:
             logger.info(f"Stopping: Max epochs reached :: ({self.max_epochs})")
             return True
 
-        if self.max_evals is not None and self._total_evals >= self.max_evals:
-            logger.info(f"Stopping: Max evals reached :: ({self.max_evals})")
+        if self.max_steps is not None and self._total_steps >= self.max_steps:
+            logger.info(f"Stopping: Max steps reached :: ({self.max_steps})")
             return True
 
         if self.patience is not None and self._patience_counter >= self.patience:

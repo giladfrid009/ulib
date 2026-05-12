@@ -15,6 +15,17 @@ from ulib.activation_extractor import ActivationExtractor
 
 
 class FG_Experiment(Experiment):
+    """
+    Official Arguments:
+        - norm=inf
+        - epsilon=10/255
+        - train_batch=32
+        - max_epochs=10
+        - patience=10 (effectively no early stopping)
+        
+        - lr=0.02
+        - layer is last layer in the model
+    """
     def add_arguments(self, parser: ArgumentParser) -> None:
         fg_args = parser.add_argument_group("FG-UAP Attack Arguments")
         

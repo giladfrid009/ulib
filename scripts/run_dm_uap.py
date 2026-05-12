@@ -14,6 +14,21 @@ from ulib.attacks.dm_uap import DM_UAP
 
 
 class DM_Experiment(Experiment):
+    """
+    Official Arguments: (from paper and official codebase)
+        - norm=inf
+        - epsilon=10/255
+        - train_batch=125
+        - max_epochs=20
+        - patience=20 (effectively no early stopping)
+        
+        - beta=9
+        - smooth_rate=0.2
+        - data_neighborhood=32
+        - data_steps=10
+        - theta_neighborhood=1
+        - theta_steps=10
+    """
     def add_arguments(self, parser: ArgumentParser) -> None:
         dm_args = parser.add_argument_group("DM-UAP Attack Arguments")
 

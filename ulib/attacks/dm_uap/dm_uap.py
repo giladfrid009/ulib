@@ -25,6 +25,8 @@ class DM_UAP(UnivAttack):
         ## Reference:
             Presented in "Improving Generalization of Universal Adversarial Perturbation via Dynamic Maximin Optimization": https://arxiv.org/pdf/2503.12793
 
+        Code Reference: https://github.com/yechao-zhang/DM-UAP
+
         Args:
             total_epochs (int): Number of training epochs (T in paper).
             beta (float): Loss clamping value.

@@ -79,6 +79,9 @@ class MIPGD(torchattacks.attack.Attack):
         # Move data to device and detach from any computation graph.
         images = images.to(self.device).detach()
         labels = labels.to(self.device).detach()
+        
+        if self.targeted:
+            labels = self.get_target_label(images, labels)
 
         # Initialize perturbation (delta) and momentum (v)
         delta = torch.zeros_like(images)
@@ -95,12 +98,15 @@ class MIPGD(torchattacks.attack.Attack):
                 # Compute the current adversarial image and ensure it lies in [0,1]
                 outputs = self.get_logits(adv_images)
 
+                suc_mask = outputs.argmax(dim=1) != labels
+                if self.targeted:
+                    suc_mask = ~suc_mask
+                
                 # Early stopping
-                if (outputs.argmax(dim=1) != labels).all():
+                if suc_mask.all():
                     break
 
-                cost = loss_fn(outputs, labels)
-                
+                cost = loss_fn(outputs, labels)                
                 if self.targeted:
                     cost = -cost
                 

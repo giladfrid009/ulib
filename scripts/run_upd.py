@@ -29,13 +29,29 @@ INNER_ATTACKS = [
 
 
 class UPD_Experiment(Experiment):
+    """
+    Official Arguments (from paper):
+        - norm=inf
+        - epsilon=16/255
+        - train_batch=128
+        - max_epochs=30
+        
+        - inner_attack=fgsm
+        - inner_steps=16/255
+        - inner_steps=5
+        - lr=0.02
+        - skip_fooled=true
+        - skip_failed=true
+        - layers is last model layer
+    """
+    
     def add_arguments(self, parser: ArgumentParser) -> None:
         upd_args = parser.add_argument_group("UPD Attack Arguments")
 
         upd_args.add_argument(
             "--inner_attack",
             type=str,
-            default="ffgsm",
+            default="fgsm",
             choices=INNER_ATTACKS,
             help="The inner attack method to use for crafting the universal perturbation.",
         )

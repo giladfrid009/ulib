@@ -230,6 +230,14 @@ class Experiment(ABC):
             metavar="NUM",
             help="The maximum number of training epochs.",
         )
+        
+        stop_args.add_argument(
+            "--max_steps",
+            type=int,
+            default=None,
+            metavar="NUM",
+            help="The maximum number of training steps. If not specified, there is no step limit.",
+        )
 
         stop_args.add_argument(
             "--patience",
@@ -374,7 +382,7 @@ class Experiment(ABC):
                 max_epochs=args.max_epochs if not args.test_run else 1,
                 max_time=args.max_time * 60 if not args.test_run else 5,
                 patience=args.patience,
-                max_evals=None if not args.test_run else 1,
+                max_steps=args.max_steps if not args.test_run else 20,
             )
 
             logger.info("Running attack...")

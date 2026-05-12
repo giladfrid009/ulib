@@ -194,13 +194,15 @@ class UnivAttack(ABC):
                 with torch.device(self.device):
                     data = self.to_device(*data)
                     loss = self.process_batch(data, batch_num=batch_num, epoch_num=epoch_num, step_num=step)
-                stop_criteria.update(epoch_num, None)
+                
+                stop_criteria.update(epoch_num, None, step_inc=1)
+                should_stop = stop_criteria.should_stop()
                 self.metric_tracker.report_scalar("loss/current", loss, step)
 
                 if should_stop or (step > 0 and step % round(self.eval_freq * len(dl_train)) == 0):
                     metrics = self.evaluate(dl_eval)
                     main_metric = metrics[self.judge_metric]
-                    stop_criteria.update(epoch_num, main_metric)
+                    stop_criteria.update(epoch_num, main_metric, step_inc=0)
                     should_stop = stop_criteria.should_stop()
 
                     self.save_checkpoint()

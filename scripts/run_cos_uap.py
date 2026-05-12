@@ -14,6 +14,14 @@ from ulib.attacks.cosine_uap import Cosine_UAP
 
 
 class Cos_Experiment(Experiment):
+    """
+    Official Arguments:
+        - norm=inf
+        - epsilon=10/255
+        - max_steps=1000
+        - patience=1000 (effectively no early stopping)
+    """
+    
     def add_arguments(self, parser: ArgumentParser) -> None:
         cos_args = parser.add_argument_group("Cos-UAP Attack Arguments")
         

@@ -12,64 +12,92 @@ from scripts.experiment import Experiment
 from ulib.attacks.uapgd import MIPGD, UAPGD, ValueScheduler
 
 
-class Uapgd_Experiment(Experiment):
+class UAPGD_Experiment(Experiment):
+    """
+    Official Arguments (from paper):
+        - norm=inf
+        - epsilon=10/255
+        - train_batch=1
+        - max_epochs=20
+        - patience=20 (effectively no early stopping)
+
+        - inner_beta=0.5
+        - inner_gamma=1e-5
+        - inner_steps=10
+
+        - for VGG and ResNet:
+            - inner_alpha=1.0
+            - sched_decay=0.1
+            - sched_period=5  (decrease at epochs 5, 10)
+
+        - for Inception:
+            - inner_alpha=0.5
+            - sched_decay=0.2
+            - sched_period=5  (decrease at epochs 5, 10, 15)
+    """
+
     def add_arguments(self, parser: ArgumentParser) -> None:
-        args = parser.add_argument_group("UAPGD Attack Arguments")
+        uapgd_args = parser.add_argument_group("UAPGD Attack Arguments")
 
-        args.add_argument(
-            "--inner_eps",
-            type=int,
-            default=16,
-            help="Epsilon for MIPGD (inner attack) in 255 scale.",
-        )
-
-        args.add_argument(
+        uapgd_args.add_argument(
             "--inner_alpha",
             type=float,
             default=0.1,
-            help="Alpha for MIPGD.",
+            help="Initial step size for MIPGD (inner attack).",
         )
 
-        args.add_argument(
+        uapgd_args.add_argument(
+            "--inner_beta",
+            type=float,
+            default=0.5,
+            help="Momentum factor for MIPGD (inner attack).",
+        )
+
+        uapgd_args.add_argument(
             "--inner_gamma",
             type=float,
             default=0.0,
-            help="Gamma for MIPGD.",
+            help="Weight gain for MIPGD (inner attack).",
         )
 
-        # ValueScheduler args
-        args.add_argument(
-            "--sched_init",
-            type=float,
-            default=0.1,
-            help="Initial value for alpha scheduler.",
+        uapgd_args.add_argument(
+            "--inner_steps",
+            type=int,
+            default=10,
+            help="Number of steps for MIPGD (inner attack).",
         )
 
-        args.add_argument(
-            "--sched_step",
+        uapgd_args.add_argument(
+            "--sched_period",
             type=int,
             default=5,
-            help="Step size for StepLR in alpha scheduler.",
+            help="Period of learning rate decay for StepLR in alpha scheduler.",
         )
 
-        args.add_argument(
-            "--sched_gamma",
+        uapgd_args.add_argument(
+            "--sched_decay",
             type=float,
             default=0.2,
-            help="Gamma for StepLR in alpha scheduler.",
+            help="Multiplicative factor of learning rate decay for StepLR in alpha scheduler.",
         )
 
     def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
         args = self.args()
 
-        eps = args.inner_eps / 255.0
-        torch_attack = MIPGD(pert_model.model, eps=eps, alpha=args.inner_alpha, gamma=args.inner_gamma)
+        torch_attack = MIPGD(
+            pert_model.model,
+            eps=pert_model.eps,
+            alpha=args.inner_alpha,
+            beta=args.inner_beta,
+            gamma=args.inner_gamma,
+            steps=args.inner_step,
+        )
 
         alpha_sched = ValueScheduler(
-            init_value=args.sched_init,
+            init_value=args.inner_alpha,
             sched_cls=StepLR,
-            step_size=args.sched_step,
-            gamma=args.sched_gamma,
+            step_size=args.sched_period,
+            gamma=args.sched_decay,
         )
 
         return UAPGD(
@@ -86,4 +114,4 @@ class Uapgd_Experiment(Experiment):
 
 
 if __name__ == "__main__":
-    Uapgd_Experiment().main()
+    UAPGD_Experiment().main()

@@ -14,6 +14,17 @@ from ulib.attacks.df_uap import DF_UAP
 
 
 class DF_Experiment(Experiment):
+    """
+    Official Arguments:
+        - norm=inf
+        - epsilon=10/255
+        - targeted=True
+        - train_batch=32
+        - max_steps=1000
+        - patience=1000 (effectively no early stopping)
+        - lr=0.005
+    """
+    
     def add_arguments(self, parser: ArgumentParser) -> None:
         df_args = parser.add_argument_group("DF-UAP Attack Arguments")
         
