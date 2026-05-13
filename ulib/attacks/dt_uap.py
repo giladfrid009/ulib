@@ -9,7 +9,7 @@ class DTLoss(torch.nn.Module):
         super().__init__()
         self.gamma = gamma
         self.targeted = targeted
-        self.mse_loss = ActivationLoss(loss_fn=lambda v1, v2: torch.sum(torch.square(v1.flatten(1) - v2.flatten(1)), dim=1) / 2)
+        self.mse_loss = ActivationLoss(loss_fn=lambda v1, v2: torch.mean(torch.square(v1.flatten(1) - v2.flatten(1)), dim=1), reduction="mean")
         self.ce_loss = torch.nn.CrossEntropyLoss()
 
     def forward(
@@ -21,7 +21,7 @@ class DTLoss(torch.nn.Module):
     ) -> torch.Tensor:
         """
         Compute the loss for the DT_UAP attack.
-        
+
         Args:
             uap_activ (torch.Tensor): Activations only from the UAP, `f_l(v)` from the paper.
             adv_activ (torch.Tensor): Activations from the perturbed inputs, `f_l(alpha * x + v)` from the paper.
@@ -43,8 +43,8 @@ class DT_UAP(OptimAttack):
 
     Args:
         activ_extractor (ActivationExtractor): Extracts outputs of the layer preceding the last fully-connected layer.
-        alpha_step_size (float): Additive step size for the alpha parameter.
-            alpha is the weight of the input images in the forward pass, and updated every batch.
+        alpha (float): The weight of the input images in the forward pass.
+        alpha_step (float | None): If not `None`, the value of `alpha` will be linearly increased from 0 to `alpha`, with a step size of `alpha_step`.
     """
 
     def __init__(
@@ -52,12 +52,16 @@ class DT_UAP(OptimAttack):
         pert_model: PertModule,
         optimizer: torch.optim.Optimizer,
         activ_extractor: ActivationExtractor,
-        alpha_step_size: float = 1e-4,
+        alpha: float = 0.3,
+        alpha_step: float | None = 0.0001,
         targeted: bool = True,
         **kwargs,
     ):
-        if alpha_step_size <= 0:
-            raise ValueError("`alpha_step_size` must be > 0")
+        if not (0 <= alpha <= 1):
+            raise ValueError("`alpha` must be in [0, 1]")
+
+        if alpha_step is not None and not (0 <= alpha_step <= 1):
+            raise ValueError("`alpha_step` must be in [0, 1]")
 
         super().__init__(
             pert_model=pert_model,
@@ -68,14 +72,17 @@ class DT_UAP(OptimAttack):
         )
 
         self.extractor = activ_extractor
-        self.alpha_step_size = alpha_step_size
-        self.step_num = 0
+        self.alpha = alpha
+        self.alpha_step = alpha_step
 
         self.metric_tracker.report_hparams("activ_extractor", activ_extractor.get_hparams())
-        self.metric_tracker.report_hparams("attack", alpha_step_size=alpha_step_size)
+        self.metric_tracker.report_hparams("attack", alpha=alpha, alpha_step=alpha_step)
 
-    def get_alpha(self, step: int, step_size: float) -> float:
-        return min(1.0, step * step_size)
+    def compute_alpha(self, step: int) -> float:
+        if self.alpha_step is None:
+            return self.alpha
+
+        return min(self.alpha, self.alpha_step * (step + 1))
 
     def compute_loss(
         self,
@@ -84,13 +91,13 @@ class DT_UAP(OptimAttack):
         epoch_num: int,
         step_num: int,
     ) -> torch.Tensor:
-        alpha = self.get_alpha(self.step_num, step_size=self.alpha_step_size)
-        self.metric_tracker.report_scalar("alpha", alpha, step_num)
-        self.step_num += 1
 
         x_batch, y_batch = data
 
         with self.extractor.capture():
+            alpha = self.compute_alpha(step_num)
+            self.metric_tracker.report_scalar("DT-UAP/alpha", alpha, step_num)
+
             adv_logits = self.pert_model(alpha * x_batch)
             adv_activ = self.extractor.get_activations()
             self.pert_model(torch.zeros_like(x_batch))

@@ -23,10 +23,14 @@ class DT_UAP_Experiment(Experiment):
         - train_batch=16
         - max_epochs=10
         - patience=10 (effectively no early stopping)
-        
+
         - lr=0.01
         - weight_decay=1e-10
+        - alpha_step=None
+        - layer is last layer in the model
+        - alpha is not specified
     """
+
     def add_arguments(self, parser: ArgumentParser) -> None:
         dt_args = parser.add_argument_group("DT-UAP Attack Arguments")
 
@@ -37,7 +41,7 @@ class DT_UAP_Experiment(Experiment):
             metavar="FLOAT",
             help="Learning rate for Adam optimization.",
         )
-        
+
         dt_args.add_argument(
             "--weight_decay",
             type=float,
@@ -46,17 +50,42 @@ class DT_UAP_Experiment(Experiment):
             help="Weight decay for Adam optimizer.",
         )
 
+        dt_args.add_argument(
+            "--alpha",
+            type=float,
+            default=1.0,
+            metavar="FLOAT",
+            help="The weight of the input images in the forward pass.",
+        )
+
+        dt_args.add_argument(
+            "--alpha_step",
+            type=float,
+            default=None,
+            metavar="FLOAT",
+            help="The value of `alpha` will be linearly increased from 0 to `alpha`, with a step size of `alpha_step`.",
+        )
+
+        dt_args.add_argument(
+            "--layer",
+            type=str,
+            default="model.avgpool",
+            metavar="NAME",
+            help="Layer name to extract output activations from",
+        )
+
     def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
         args = self.args()
-        
+
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        activ_extractor = ActivationExtractor(pert_model.model, *args.layers, capture_output=True)
+        activ_extractor = ActivationExtractor(pert_model.model, args.layer, capture_output=False)
 
         return DT_UAP(
             pert_model=pert_model,
             optimizer=optimizer,
             activ_extractor=activ_extractor,
-            alpha_step_size=args.alpha_step_size,
+            alpha=args.alpha,
+            alpha_step=args.alpha_step,
             # general args
             eval_freq=eval_freq,
             evaluator=evaluator,

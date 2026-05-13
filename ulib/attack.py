@@ -90,7 +90,7 @@ class UnivAttack(ABC):
         )
 
         self.metric_tracker.report_hparams(
-            "part",
+            "pert",
             self.pert_model.get_hparams(),
         )
 

@@ -17,9 +17,10 @@ class Cos_Experiment(Experiment):
     """
     Official Arguments:
         - norm=inf
-        - epsilon=10/255
+        - epsilon=10/255 for standard, 16/255 for robust models
         - max_steps=1000
         - patience=1000 (effectively no early stopping)
+        - lr is not specified
     """
     
     def add_arguments(self, parser: ArgumentParser) -> None:

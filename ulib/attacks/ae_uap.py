@@ -81,8 +81,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
         return adv_images
 
 
-# TODO: IMPLEMENT DATA-FREE AND DATA-DEPENDENT VERSIONS
-# TODO: IMPLEMENT TARGETED VERSION
+# TODO: implement curriculum learning over alpha as in the paper.
 class AE_UAP(OptimAttack):
     """
     ## Reference:
@@ -90,7 +89,9 @@ class AE_UAP(OptimAttack):
 
     Args:
         inner_attack (ulib.attacks.ae_uap.AE_MIFGSM): Inner attack to use for generating adversarial examples.
+        data_free (bool): Whether to use a data-free version of the attack.
         gamma (float): Regularization strength for the consistency loss term, in the `AELoss` class.
+        noise_scale (float): Uniform noise scale to use for the data-free version of the attack.
     """
 
     def __init__(
@@ -98,7 +99,9 @@ class AE_UAP(OptimAttack):
         pert_model: PertModule,
         optimizer: torch.optim.Optimizer,
         inner_attack: AE_MIFGSM,
+        data_free: bool = False,
         gamma: float = 0.5,
+        noise_scale: float = 16 / 255,
         **kwargs,
     ):
         if not isinstance(inner_attack, AE_MIFGSM):
@@ -112,8 +115,18 @@ class AE_UAP(OptimAttack):
             **kwargs,
         )
 
+        self.data_free = data_free
+        self.noise_scale = noise_scale
+
         self.inner_attack = inner_attack
         self.inner_attack.set_criterion(self.criterion)
+
+        self.metric_tracker.report_hparams(
+            "attack",
+            gamma=gamma,
+            data_free=data_free,
+            noise_scale=noise_scale,
+        )
 
         self.metric_tracker.report_hparams(
             "inner_attack",
@@ -129,8 +142,16 @@ class AE_UAP(OptimAttack):
         step_num: int,
     ) -> torch.Tensor:
         x_batch, y_batch = data
+
+        if self.data_free:
+            x_batch = torch.full_like(x_batch, fill_value=0.5)
+            noise = (2 * torch.rand_like(x_batch) - 1) * self.noise_scale
+            x_batch = torch.clamp(x_batch + noise, min=0, max=1)
+            # NOTE: we use the real y_batch, its equivalent to using random labels
+            # otherwise, we can simply randomize the labels as well
+
         with self.autocast_context(enabled=False):
-            x_attk = self.inner_attack.forward(x_batch, y_batch)
+            x_attk = self.inner_attack(x_batch, y_batch)
         logits = self.pert_model(x_attk)
         loss = -self.criterion(logits, y_batch)
         return loss

@@ -118,7 +118,6 @@ class UAP_Experiment(Experiment):
             # general args
             eval_freq=eval_freq,
             evaluator=evaluator,
-            mixed_precision=mixed_precision,
             metric_tracker=metric_tracker,
             targeted=self.targeted,
         )

@@ -23,6 +23,7 @@ class DF_Experiment(Experiment):
         - max_steps=1000
         - patience=1000 (effectively no early stopping)
         - lr=0.005
+        - kappa is not specified
     """
     
     def add_arguments(self, parser: ArgumentParser) -> None:

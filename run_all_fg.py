@@ -134,14 +134,14 @@ MODELS = {
         "model": "liu-swin",
         "layer": "model.head.fc",
     },
-    "peng-wrn50": {
-        "nick": "peng-wrn50",
-        "experiments": {
-            "std": EXP_SETUP_STD,
-        },        # CLI Arguments
-        "model": "peng-wrn50",
-        "layer": "fc",
-    },
+    # "peng-wrn50": {
+    #     "nick": "peng-wrn50",
+    #     "experiments": {
+    #         "std": EXP_SETUP_STD,
+    #     },        # CLI Arguments
+    #     "model": "peng-wrn50",
+    #     "layer": "fc",
+    # },
 }
 
 # =============================================================================

@@ -92,7 +92,8 @@ class UAP(UnivAttack):
         # per-sample attack
         pert = self.pert_model.get_pert(clone=False)
         x_pert = self.pert_model.clamp_inputs(pert + x_batch)
-        x_attk = self.inner_attack.forward(x_pert.detach(), y_batch)
+        with torch.enable_grad():
+            x_attk = self.inner_attack(x_pert.detach(), y_batch)
 
         # use only successfully attacked samples
         y_attk = self.orig_model(x_attk).argmax(dim=1)

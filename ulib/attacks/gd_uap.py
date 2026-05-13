@@ -10,7 +10,7 @@ class GD_UAP(OptimAttack):
         Presented in "Generalizable Data-free Objective for Crafting Universal Adversarial Perturbations": https://arxiv.org/pdf/1801.08092
 
     Args:
-        data_dependant (bool): If True, the perturbation is computed using the input data.
+        data_free (bool): If True, the perturbation is computed using a data-free objective.
             If False, the perturbation is computed using a random sample from input mean and std.
         sat_thresh (float): Threshold for the saturation rate.
             If the saturation rate is above this threshold, and changed less than `sat_delta` since the last batch,
@@ -24,7 +24,7 @@ class GD_UAP(OptimAttack):
         self,
         pert_model: PertModule,
         optimizer: torch.optim.Optimizer,
-        data_dependant: bool = True,
+        data_free: bool = False,
         sat_thresh: float = 0.5,
         sat_delta: float = 0.0001,
         **kwargs,
@@ -35,9 +35,7 @@ class GD_UAP(OptimAttack):
         if sat_delta < 0.0 or sat_delta > 1.0:
             raise ValueError("`sat_delta` must be in [0, 1]")
 
-        criterion = ActivationLoss(
-            loss_fn=lambda v: -torch.log(torch.sum(torch.square(v.flatten(1)) / 2, dim=1) + torch.finfo(v.dtype).eps)
-        )
+        criterion = ActivationLoss(loss_fn=lambda v: -torch.log(torch.sum(torch.square(v.flatten(1)) / 2, dim=1) + torch.finfo(v.dtype).eps))
 
         super().__init__(
             pert_model=pert_model,
@@ -48,7 +46,7 @@ class GD_UAP(OptimAttack):
         )
 
         self.extractor = ActivationExtractor(self.orig_model, torch.nn.Conv2d)
-        self.data_dependant = data_dependant
+        self.data_free = data_free
         self.sat_thresh = sat_thresh
         self.sat_delta = sat_delta
 
@@ -56,13 +54,7 @@ class GD_UAP(OptimAttack):
         self.curr_sat = 0.0
 
         self.metric_tracker.report_hparams("activ_extractor", self.extractor.get_hparams())
-
-        self.metric_tracker.report_hparams(
-            "attack",
-            data_dependant=data_dependant,
-            sat_thresh=sat_thresh,
-            sat_delta=sat_delta,
-        )
+        self.metric_tracker.report_hparams("attack", data_free=data_free, sat_thresh=sat_thresh, sat_delta=sat_delta)
 
     def saturation_rate(self, pert: torch.Tensor, eps: float) -> float:
         return torch.sum(torch.abs(pert) == eps).float().item() / torch.numel(pert)
@@ -87,15 +79,14 @@ class GD_UAP(OptimAttack):
                 self.curr_sat = 0.0
 
         x_batch, _ = data
-        if self.data_dependant:
-            input = x_batch
-        else:
+
+        if self.data_free:
             mu = torch.mean(x_batch, dim=0, keepdim=True)
             sigma = torch.sqrt(torch.var(x_batch, dim=0, keepdim=True))
-            input = mu + torch.randn_like(x_batch) * sigma
+            x_batch = mu + torch.randn_like(x_batch) * sigma
 
         with self.extractor.capture():
-            self.pert_model(input)
+            self.pert_model(x_batch)
             activ = self.extractor.get_activations()
 
         loss = self.criterion(activ)

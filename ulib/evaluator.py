@@ -149,7 +149,7 @@ class ExtendedEvaluator(MetricEvaluator):
     def metric_names(self) -> list[str]:
         return [
             "FR",  # fooling rate
-            "ASR",  # attack success rate
+            "ASR",  # attack success rate (relative improvement)
             "C-ACC",  # clean accuracy
             "R-ACC",  # robust accuracy
             "C-MR",  # clean misclassification rate
@@ -186,5 +186,11 @@ class ExtendedEvaluator(MetricEvaluator):
 
         cac = metrics["C-ACC"]
         rac = metrics["R-ACC"]
-        metrics["ASR"] = (cac - rac) / cac if cac > 0 else float("nan")
+
+        if not self.targeted:  # standard relative improvement
+            metrics["ASR"] = (cac - rac) / cac if cac > 0 else float("nan")
+
+        else:  # targeted relative improvement (T-ASR)
+            metrics["ASR"] = (rac - cac) / (1 - cac) if (1 - cac) > 0 else float("nan")
+
         return metrics
