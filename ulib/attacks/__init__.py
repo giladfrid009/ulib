@@ -3,6 +3,7 @@ from ulib.attacks.ae_uap import AE_UAP
 from ulib.attacks.cosine_uap import Cosine_UAP
 from ulib.attacks.d_badge import D_BADGE
 from ulib.attacks.df_uap import DF_UAP
+from ulib.attacks.dm_uap import DM_UAP
 from ulib.attacks.dt_uap import DT_UAP
 from ulib.attacks.du_attack import DU_ATTACK
 from ulib.attacks.fff import FFF
@@ -19,6 +20,7 @@ __all__ = [
     "Cosine_UAP",
     "D_BADGE",
     "DF_UAP",
+    "DM_UAP",
     "DT_UAP",
     "DU_ATTACK",
     "FFF",
