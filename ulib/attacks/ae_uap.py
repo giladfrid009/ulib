@@ -20,9 +20,8 @@ class AELoss(torch.nn.Module):
 
     def consistency_loss(self, logits: torch.Tensor) -> torch.Tensor:
         logits = logits.view(logits.size(0), -1)
-        norm = torch.norm(logits, p=2, dim=1, keepdim=True)
-        logits = logits / (norm + torch.finfo(norm.dtype).eps)
-        det = torch.sum(logits * logits, dim=1)
+        logits = nn.functional.normalize(logits, p=2, dim=1)
+        det = torch.det(logits @ logits.T)
         return torch.log(det).mean()
 
 

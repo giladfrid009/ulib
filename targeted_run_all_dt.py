@@ -37,7 +37,7 @@ EXP_SETUP_STD = dict(
     lr=0.01,  # from the paper
     weight_decay=1e-10,  # from the paper
     alpha=1.0, # not specified in the paper
-    alpha_step=0.00025 # we added alpha scheduling since it improves performance, and alpha is not specified
+    alpha_step=0.0003 # we added alpha scheduling since it improves performance, and alpha is not specified
 )
 
 # =============================================================================
