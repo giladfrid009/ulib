@@ -73,8 +73,13 @@ class AE_MIFGSM(torchattacks.attack.Attack):
             momentum_norm = torch.norm(momentum.view(momentum.size(0), -1), p=2, dim=1) + torch.finfo(momentum.dtype).eps
             momentum_norm = momentum_norm.reshape(-1, 1, 1, 1)
 
-            adv_images = adv_images - self.alpha * momentum / momentum_norm
-            delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
+            adv_images = adv_images - self.alpha * momentum / momentum_norm   
+            adv_images = torch.clamp(adv_images, 0, 1)         
+
+            # L2 projection            
+            delta = adv_images - images
+            delta = torch.renorm(delta, p=2, dim=0, maxnorm=self.eps)
+            
             adv_images = torch.clamp(images + delta, min=0, max=1).detach()
 
         return adv_images

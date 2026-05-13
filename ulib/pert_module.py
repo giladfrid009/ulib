@@ -164,7 +164,7 @@ class PertModule(nn.Module):
             return torch.clamp(pert, -self.eps, self.eps)
         elif self.norm >= 1:
             flat_pert = pert.view(1, -1)
-            projected = torch.renorm(flat_pert, p=self.norm, dim=1, maxnorm=self.eps)
+            projected = torch.renorm(flat_pert, p=self.norm, dim=0, maxnorm=self.eps)
             return projected.view_as(pert)
         else:
             raise ValueError(f"Invalid norm value: {self.norm}")
