@@ -81,7 +81,7 @@ class UAPGD_Experiment(Experiment):
             help="Multiplicative factor of learning rate decay for StepLR in alpha scheduler.",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
 
         torch_attack = MIPGD(
@@ -106,7 +106,7 @@ class UAPGD_Experiment(Experiment):
             alpha_sched=alpha_sched,
             sched_on_batch=False,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
             metric_tracker=metric_tracker,
             targeted=self.targeted,

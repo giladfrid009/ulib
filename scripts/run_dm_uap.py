@@ -21,7 +21,8 @@ class DM_Experiment(Experiment):
         - train_batch=125
         - max_epochs=20
         - patience=20 (effectively no early stopping)
-        
+
+        - lr=0.1
         - beta=9
         - smooth_rate=0.2
         - data_neighborhood=32
@@ -29,8 +30,17 @@ class DM_Experiment(Experiment):
         - theta_neighborhood=1
         - theta_steps=10
     """
+
     def add_arguments(self, parser: ArgumentParser) -> None:
         dm_args = parser.add_argument_group("DM-UAP Attack Arguments")
+
+        dm_args.add_argument(
+            "--lr",
+            type=float,
+            default=0.1,
+            metavar="FLOAT",
+            help="Learning rate for the attack optimization.",
+        )
 
         dm_args.add_argument(
             "--beta",
@@ -79,11 +89,13 @@ class DM_Experiment(Experiment):
             metavar="FLOAT",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
+        optimizer = torch.optim.AdamW(pert_model.parameters(), lr=args.lr)
 
         return DM_UAP(
             pert_model=pert_model,
+            optimizer=optimizer,
             total_epochs=args.max_epochs,
             beta=args.beta,
             theta_neighborhood=args.theta_neighborhood,
@@ -92,7 +104,7 @@ class DM_Experiment(Experiment):
             theta_steps=args.theta_steps,
             smooth_rate=args.smooth_rate,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
             metric_tracker=metric_tracker,
         )

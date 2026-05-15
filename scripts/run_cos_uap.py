@@ -34,7 +34,7 @@ class Cos_Experiment(Experiment):
             help="Learning rate for Adam optimizer",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
 
@@ -45,9 +45,9 @@ class Cos_Experiment(Experiment):
             pert_model=pert_model,
             optimizer=optimizer,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
-            mixed_precision=mixed_precision,
+            mixed_precision=args.use_amp.lower() == "true",
             metric_tracker=metric_tracker,
         )
 

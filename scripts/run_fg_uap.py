@@ -45,7 +45,7 @@ class FG_Experiment(Experiment):
             help="Layer name to extract output activations from",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
         activ_extractor = ActivationExtractor(pert_model.model, args.layer, exact_match=True, capture_output=False)
@@ -55,9 +55,9 @@ class FG_Experiment(Experiment):
             optimizer=optimizer,
             activ_extractor=activ_extractor,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
-            mixed_precision=mixed_precision,
+            mixed_precision=args.use_amp.lower() == "true",
             metric_tracker=metric_tracker,
             targeted=self.targeted,
         )

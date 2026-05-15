@@ -84,7 +84,7 @@ class UAP_Experiment(Experiment):
             help="The number of steps for the inner attack (if applicable).",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
 
         def attack_builder(model: torch.nn.Module, epoch: int) -> torchattacks.attack.Attack:
@@ -116,7 +116,7 @@ class UAP_Experiment(Experiment):
             pert_model=pert_model,
             inner_attack=attack_builder,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
             metric_tracker=metric_tracker,
             targeted=self.targeted,

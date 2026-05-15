@@ -105,7 +105,7 @@ class UPD_Experiment(Experiment):
             help="Whether to skip samples that the inner attack failed to attack.",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
         criterion = CosSim(reduce_fn=lambda losses: torch.sum(losses, dim=-1).mean())
@@ -145,9 +145,9 @@ class UPD_Experiment(Experiment):
             skip_already_fooled=args.skip_fooled.lower() == "true",
             skip_failed_attacks=args.skip_failed.lower() == "true",
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
-            mixed_precision=mixed_precision,
+            mixed_precision=args.use_amp.lower() == "true",
             metric_tracker=metric_tracker,
             targeted=self.targeted,
         )

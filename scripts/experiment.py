@@ -18,6 +18,7 @@ if str(module_dir) not in sys.path:
 
 from ulib.evaluator import MetricEvaluator, ExtendedEvaluator
 from ulib.utils import env
+from ulib.data import TensorLoader
 from ulib import PertModule, StopCriteria, UnivAttack
 from ulib.utils.trackers import MetricTracker
 from ulib.utils.logging import create_logger, setup_logging, loglevel_names
@@ -271,8 +272,7 @@ class Experiment(ABC):
         self,
         pert_model: PertModule,
         evaluator: MetricEvaluator,
-        eval_freq: float,
-        mixed_precision: bool,
+        dl_train: TensorLoader,
         metric_tracker: MetricTracker,
     ) -> UnivAttack:
         pass
@@ -359,8 +359,7 @@ class Experiment(ABC):
             univ_attack = self.initialize_attack(
                 pert_model=pert_model,
                 evaluator=evaluator,
-                eval_freq=args.eval_freq,
-                mixed_precision=args.use_amp.lower() == "true",
+                dl_train=dl_train,
                 metric_tracker=metric_tracker,
             )
 

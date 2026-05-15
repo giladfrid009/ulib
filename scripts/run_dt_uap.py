@@ -74,7 +74,7 @@ class DT_UAP_Experiment(Experiment):
             help="Layer name to extract output activations from",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
 
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -87,9 +87,9 @@ class DT_UAP_Experiment(Experiment):
             alpha=args.alpha,
             alpha_step=args.alpha_step,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
-            mixed_precision=mixed_precision,
+            mixed_precision=args.use_amp.lower() == "true",
             metric_tracker=metric_tracker,
             targeted=self.targeted,
         )

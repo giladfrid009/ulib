@@ -15,14 +15,14 @@ from ulib.attacks.usgd import USGD
 class USGD_Experiment(Experiment):
     def add_arguments(self, parser: ArgumentParser) -> None:
         args = parser.add_argument_group("USGD Attack Arguments")
-        
+
         args.add_argument(
             "--lr",
             type=float,
             default=0.01,
             help="Learning rate for Adam optimizer",
         )
-        
+
         args.add_argument(
             "--skip_fooled",
             type=str,
@@ -32,7 +32,7 @@ class USGD_Experiment(Experiment):
             help="Whether to skip already fooled samples during attack.",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr, maximize=True)
         criterion = torch.nn.CrossEntropyLoss()
@@ -41,10 +41,10 @@ class USGD_Experiment(Experiment):
             pert_model=pert_model,
             optimizer=optimizer,
             criterion=criterion,
-            skip_already_fooled=(args.skip_fooled.lower() == "true"),
+            skip_already_fooled=args.skip_fooled.lower() == "true",
             # general args
-            mixed_precision=mixed_precision,
-            eval_freq=eval_freq,
+            mixed_precision=args.use_amp.lower() == "true",
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
             metric_tracker=metric_tracker,
             targeted=self.targeted,

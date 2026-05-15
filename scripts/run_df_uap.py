@@ -45,7 +45,7 @@ class DF_Experiment(Experiment):
             help="Kappa value for DF-UAP attack",
         )
 
-    def initialize_attack(self, pert_model, evaluator, eval_freq, mixed_precision, metric_tracker):
+    def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
 
@@ -54,9 +54,9 @@ class DF_Experiment(Experiment):
             optimizer=optimizer,
             kappa=args.kappa,
             # general args
-            eval_freq=eval_freq,
+            eval_freq=args.eval_freq,
             evaluator=evaluator,
-            mixed_precision=mixed_precision,
+            mixed_precision=args.use_amp.lower() == "true",
             metric_tracker=metric_tracker,
             targeted=self.targeted,
         )

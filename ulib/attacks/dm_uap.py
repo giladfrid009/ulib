@@ -15,7 +15,7 @@ class PGD_Theta_Apart:
     """
     Code Reference: https://github.com/yechao-zhang/DM-UAP/blob/main/PGDL2.py
     """
-    
+
     def __init__(
         self,
         eps: float = 1.0,
@@ -36,10 +36,14 @@ class PGD_Theta_Apart:
         self.smooth_rate = smooth_rate
 
     def loss_gls(self, logits: torch.Tensor, labels: torch.Tensor, smooth_rate: float) -> torch.Tensor:
-        # logits: model prediction logits before the soft-max, with size [batch_size, classes]
-        # labels: the (noisy) labels for evaluation, with size [batch_size]
-        # smooth_rate: could go either positive or negative,
-        # smooth_rate candidates we adopted in the paper: [0.8, 0.6, 0.4, 0.2, 0.0, -0.2, -0.4, -0.6, -0.8, -1.0, -2.0, -4.0, -6.0, -8.0].
+        """
+        Args:
+            logits (torch.Tensor): model prediction logits before the soft-max, with size [batch_size, classes]
+            labels (torch.Tensor): the (noisy) labels for evaluation, with size [batch_size]
+            smooth_rate (float): could go either positive or negative, smooth_rate candidates 
+                we adopted in the paper: [0.8, 0.6, 0.4, 0.2, 0.0, -0.2, -0.4, -0.6, -0.8, -1.0, -2.0, -4.0, -6.0, -8.0].
+        """
+        
         confidence = 1.0 - smooth_rate
         logprobs = F.log_softmax(logits, dim=-1)
         nll_loss = -logprobs.gather(dim=-1, index=labels.unsqueeze(1))
@@ -131,6 +135,7 @@ class DM_UAP(UnivAttack):
     def __init__(
         self,
         pert_model: PertModule,
+        optimizer: torch.optim.Optimizer,
         total_epochs: int = 20,
         beta: float = 9.0,
         theta_neighborhood: float = 1.0,
@@ -157,6 +162,7 @@ class DM_UAP(UnivAttack):
         """
         super().__init__(pert_model=pert_model, **kwargs)
 
+        self.optimizer=optimizer
         self.total_epochs = total_epochs
         self.beta = beta
         self.theta_neighborhood = theta_neighborhood
@@ -166,7 +172,6 @@ class DM_UAP(UnivAttack):
         self.smooth_rate = smooth_rate
 
         self.orig_state_dict = copy.deepcopy(self.orig_model.state_dict())
-        self.optimizer = optim.AdamW(self.pert_model.parameters(), lr=0.1)
 
         self.inner_attack = self.make_attack(0)
 
