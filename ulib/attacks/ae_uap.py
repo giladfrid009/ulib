@@ -21,12 +21,17 @@ class AELoss(torch.nn.Module):
         return -torch.gather(logits, 1, y.view(-1, 1)).mean()
 
     def consistency_loss(self, logits: torch.Tensor) -> torch.Tensor:
-        # TODO: FIX, produces infinite values
-        return 0  # type: ignore
         logits = logits.view(logits.size(0), -1)
         logits = nn.functional.normalize(logits, p=2, dim=1)
-        det = torch.det(logits @ logits.T)
-        return torch.log(det).mean()
+        gram = logits @ logits.T
+
+        sign, logabsdet = torch.linalg.slogdet(gram)
+        if sign <= 0 or not torch.isfinite(logabsdet):
+            eps = torch.finfo(gram.dtype).eps
+            gram = gram + eps * torch.eye(gram.size(0), device=gram.device, dtype=gram.dtype)
+            sign, logabsdet = torch.linalg.slogdet(gram)
+
+        return logabsdet
 
 
 class AE_MIFGSM(torchattacks.attack.Attack):
@@ -76,9 +81,7 @@ class AE_MIFGSM(torchattacks.attack.Attack):
         for _ in range(self.steps):
             adv_images.requires_grad = True
             outputs = self.get_logits(adv_images)
-
             cost = self.criterion(outputs, labels)
-            print(f"Cost: {cost.mean().item()}")
 
             grad = torch.autograd.grad(cost, adv_images, retain_graph=False, create_graph=False)[0]
             grad_norm = torch.norm(grad.view(grad.size(0), -1), p=2, dim=1) + torch.finfo(grad.dtype).eps
@@ -122,8 +125,6 @@ class AE_UAP(OptimAttack):
         noise_scale: float = 16 / 255,
         **kwargs,
     ):
-        if not isinstance(inner_attack, AE_MIFGSM):
-            raise ValueError("inner_attack must be an instance of AE_MIFGSM")
 
         super().__init__(
             pert_model=pert_model,
@@ -136,9 +137,11 @@ class AE_UAP(OptimAttack):
         if isinstance(inner_attack, AE_MIFGSM):
             self.attack_builder_func = None
             self.inner_attack = inner_attack
-        else:
+        elif callable(inner_attack):
             self.attack_builder_func = inner_attack
             self.inner_attack = self.attack_builder_func(self.orig_model, 0)
+        else:
+            raise ValueError("inner_attack must be either an instance of AE_MIFGSM or a callable that returns an AE_MIFGSM.")
 
         self.inner_attack = self.make_attack(0)
         self.data_free = data_free
@@ -192,6 +195,10 @@ class AE_UAP(OptimAttack):
 
         with self.autocast_context(enabled=False):
             x_attk = self.inner_attack(x_batch, y_batch)
+
         logits = self.pert_model(x_attk)
-        loss = -self.criterion(logits, y_batch)
+
+        with self.autocast_context(enabled=False):
+            loss = -self.criterion(logits.float(), y_batch)
+
         return loss

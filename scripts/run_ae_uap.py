@@ -14,33 +14,42 @@ from ulib.attacks.ae_uap import AE_UAP, AE_MIFGSM
 
 
 class AE_Experiment(Experiment):
-    # NOTE: verify official argument values
     """
-    Official Arguments: (data dependent) (from paper)
-        - norm=inf
-        - epsilon=10/255
-        - max_steps=1000
-        - train_batch=32
-
-        - lr=0.005
-        - cr_lambda=0.5
-        - inner_epsilon=20/255
-        - inner_epsilon_start=14/255
-        - inner_epsilon_zoom=20
-
     Official Arguments: (data free) (from paper)
         - norm=inf
         - epsilon=10/255
         - max_steps=1000
         - train_batch=32
 
+        - data_free=True
         - lr=0.005
-        - cr_lambda=0.5
+        - cr_lambda=0.05
+        - inner_epsilon=20/255
+        - inner_epsilon_start=14/255
+        - inner_epsilon_zoom=20
+
+    Official Arguments: (data dependent) (from paper)
+        - norm=inf
+        - epsilon=10/255
+        - max_steps=1000
+        - train_batch=32
+
+        - data_free=False
+        - lr=0.005
+        - cr_lambda=0.05
         - inner_epsilon=4/255
     """
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         ae_args = parser.add_argument_group("AE-UAP Attack Arguments")
+
+        ae_args.add_argument(
+            "--lr",
+            type=float,
+            default=0.005,
+            metavar="FLOAT",
+            help="Learning rate for optimizing the universal perturbation.",
+        )
 
         ae_args.add_argument(
             "--inner_epsilon",
@@ -91,7 +100,7 @@ class AE_Experiment(Experiment):
         ae_args.add_argument(
             "--cr_lambda",
             type=float,
-            default=0.5,
+            default=0.05,
             metavar="FLOAT",
             help="Regularization strength for the consistency loss term (lambda in paper).",
         )

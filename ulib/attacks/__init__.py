@@ -1,7 +1,6 @@
 from ulib.attacks.spm.adversarial_attack import SPM_UAP
 from ulib.attacks.ae_uap import AE_UAP
 from ulib.attacks.cosine_uap import Cosine_UAP
-from ulib.attacks.d_badge import D_BADGE
 from ulib.attacks.df_uap import DF_UAP
 from ulib.attacks.dm_uap import DM_UAP
 from ulib.attacks.dt_uap import DT_UAP
@@ -18,7 +17,6 @@ __all__ = [
     "SPM_UAP",
     "AE_UAP",
     "Cosine_UAP",
-    "D_BADGE",
     "DF_UAP",
     "DM_UAP",
     "DT_UAP",
