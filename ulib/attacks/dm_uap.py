@@ -1,23 +1,19 @@
 import torch
 from torch import nn
-from torch import optim
 import torch.nn.functional as F
-from typing import Optional
 import copy
+import torchattacks.attack
+from typing import Callable
+import inspect
 
-from ulib.utils.torch import extract_device
 from ulib.pert_module import PertModule
 from ulib.attack import UnivAttack
 
 
-# TODO: clean up code.
-class PGD_Theta_Apart:
-    """
-    Code Reference: https://github.com/yechao-zhang/DM-UAP/blob/main/PGDL2.py
-    """
-
+class PGD_Theta_Apart(torchattacks.attack.Attack):
     def __init__(
         self,
+        model: nn.Module,
         eps: float = 1.0,
         rho: float = 2,
         data_steps: int = 5,
@@ -26,24 +22,41 @@ class PGD_Theta_Apart:
         eps_for_division: float = 1e-10,
         smooth_rate: float = 0,
     ):
+        """
+        Code Reference: https://github.com/yechao-zhang/DM-UAP/blob/main/PGDL2.py
+
+        Args:
+            model (nn.Module): The raw model to attack.
+            eps (float): The maximum L2 norm of the adversarial perturbation.
+            rho (float): The maximum L2 norm of the model parameter perturbation.
+            data_steps (int): Number of data optimization steps in the inner PGD attack (Kd in paper).
+            theta_steps (int): Number of steps of model param optimization in the inner PGD attack (Km in paper).
+            random_start (bool): Whether to start the inner PGD attack with a random initialization.
+            eps_for_division (float): A small constant added to the denominator for numerical stability when normalizing gradients.
+            smooth_rate (float): The smoothing rate used in the GLS loss. Could go either positive or negative.
+        """
+        super().__init__("PGD_Theta_Apart", model)
+
         self.eps = eps
         self.alpha = eps * 0.125
-        self.x_steps = data_steps
+        self.data_steps = data_steps
         self.theta_steps = theta_steps
         self.random_start = random_start
         self.eps_for_division = eps_for_division
         self.rho = rho
         self.smooth_rate = smooth_rate
 
+        self.supported_mode = ["default"]
+
     def loss_gls(self, logits: torch.Tensor, labels: torch.Tensor, smooth_rate: float) -> torch.Tensor:
         """
         Args:
             logits (torch.Tensor): model prediction logits before the soft-max, with size [batch_size, classes]
             labels (torch.Tensor): the (noisy) labels for evaluation, with size [batch_size]
-            smooth_rate (float): could go either positive or negative, smooth_rate candidates 
+            smooth_rate (float): could go either positive or negative, smooth_rate candidates
                 we adopted in the paper: [0.8, 0.6, 0.4, 0.2, 0.0, -0.2, -0.4, -0.6, -0.8, -1.0, -2.0, -4.0, -6.0, -8.0].
         """
-        
+
         confidence = 1.0 - smooth_rate
         logprobs = F.log_softmax(logits, dim=-1)
         nll_loss = -logprobs.gather(dim=-1, index=labels.unsqueeze(1))
@@ -59,45 +72,44 @@ class PGD_Theta_Apart:
 
     def forward(
         self,
-        model: nn.Module,
         images: torch.Tensor,
         labels: torch.Tensor,
-        uap: Optional[torch.Tensor] = None,
-    ) -> tuple[nn.Module, torch.Tensor]:
+    ) -> torch.Tensor:
 
-        device = extract_device(model)
-        images = images.clone().detach().to(device)
-        labels = labels.clone().detach().to(device)
+        images = images.clone().detach().to(self.device)
+        labels = labels.clone().detach().to(self.device)
         adv_images = images.clone().detach()
         batch_size = len(images)
+
         if self.rho == 0 and self.alpha == 0:
-            return model, adv_images
+            return adv_images
 
         for i in range(self.theta_steps):
             step_rho = self.rho / self.theta_steps
 
-            model.train()
-            model.zero_grad()
-            for p in model.parameters():
+            self.model.train()
+            self.model.zero_grad()
+            for p in self.model.parameters():
                 p.requires_grad = True
 
-            outputs = model(adv_images)
+            outputs = self.get_logits(adv_images)
             loss = self.loss_gls(outputs, labels, self.smooth_rate)
             loss.backward()
 
-            grad_norm = torch.norm(torch.stack([p.grad.norm(p=2) for p in model.parameters() if p.grad is not None]), p=2)
+            grad_norm = torch.norm(torch.stack([p.grad.norm(p=2) for p in self.model.parameters() if p.grad is not None]), p=2)
             scale = -step_rho / (grad_norm + 1e-12)
-            for p in model.parameters():
+            for p in self.model.parameters():
                 if p.grad is None:
                     continue
                 p.data.add_(p.grad * scale)
 
-            model.eval()
-        for p in model.parameters():
-            p.requires_grad = False
-        model.eval()
+            self.model.eval()
 
-        if self.random_start and self.x_steps:
+        for p in self.model.parameters():
+            p.requires_grad = False
+        self.model.eval()
+
+        if self.random_start and self.data_steps:
             # Starting at a uniformly random point
             delta = torch.empty_like(adv_images).normal_()
             d_flat = delta.view(adv_images.size(0), -1)
@@ -105,12 +117,10 @@ class PGD_Theta_Apart:
             r = torch.zeros_like(n).uniform_(0, 1)
             delta *= r / n * self.eps
             adv_images = torch.clamp(adv_images + delta, min=0, max=1).detach()
-        for _ in range(self.x_steps):
+        
+        for _ in range(self.data_steps):
             adv_images.requires_grad = True
-            if uap is not None:
-                outputs = model(adv_images + uap)
-            else:
-                outputs = model(adv_images)
+            outputs = self.get_logits(adv_images)
             cost = -self.ce_loss(outputs, labels)
 
             # Update adversarial images
@@ -125,10 +135,9 @@ class PGD_Theta_Apart:
             factor = torch.min(factor, torch.ones_like(delta_norms))
             delta = delta * factor.view(-1, 1, 1, 1)
             adv_images = torch.clamp(images + delta, min=0, max=1).detach()
-        adv_images.requires_grad = False
-        # model.load_state_dict(after_state_dict)
 
-        return model, adv_images.detach().clone()
+        adv_images.requires_grad = False
+        return adv_images.detach().clone()
 
 
 class DM_UAP(UnivAttack):
@@ -136,13 +145,8 @@ class DM_UAP(UnivAttack):
         self,
         pert_model: PertModule,
         optimizer: torch.optim.Optimizer,
-        total_epochs: int = 20,
+        inner_attack: PGD_Theta_Apart | Callable[[torch.nn.Module, int], PGD_Theta_Apart],
         beta: float = 9.0,
-        theta_neighborhood: float = 1.0,
-        data_neighborhood: float = 32,
-        data_steps: int = 10,
-        theta_steps: int = 10,
-        smooth_rate: float = 0.2,
         **kwargs,
     ):
         """
@@ -152,62 +156,62 @@ class DM_UAP(UnivAttack):
         Code Reference: https://github.com/yechao-zhang/DM-UAP
 
         Args:
-            total_epochs (int): Number of training epochs (T in paper).
+            pert_model (PertModule): A perturbation model used to generate adversarial examples.
+            optimizer (torch.optim.Optimizer): Optimizer for training the perturbation model.
+            inner_attack (PGD_Theta_Apart | Callable[[torch.nn.Module, int], PGD_Theta_Apart]): The inner attack used to generate adversarial examples and update model parameters.
+                Can be either a fixed instance of PGD_Theta_Apart or a callable that takes the current model and epoch number as input and returns a PGD_Theta_Apart instance (for curriculum scheduling).
             beta (float): Loss clamping value.
-            theta_neighborhood (float): Model maximum neighborhood size (Rho in paper).
-            data_neighborhood (float): Data maximum neighborhood size (r in paper).
-            data_steps (int): Number of data optimization steps in the inner PGD attack (Kd in paper).
-            theta_steps (int): Number of steps of model param optimization in the inner PGD attack (Km in paper).
-            smooth_rate (float):
         """
-        super().__init__(pert_model=pert_model, **kwargs)
+        super().__init__(
+            pert_model=pert_model,
+            targeted=False,
+            **kwargs,
+        )
 
-        self.optimizer=optimizer
-        self.total_epochs = total_epochs
+        if isinstance(inner_attack, PGD_Theta_Apart):
+            self.attack_builder_func = None
+            self.inner_attack = inner_attack
+        elif callable(inner_attack):
+            self.attack_builder_func = inner_attack
+            self.inner_attack = self.attack_builder_func(self.orig_model, 0)
+        else:
+            raise ValueError("inner_attack must be either an instance of PGD_Theta_Apart or a callable that returns a PGD_Theta_Apart instance.")
+
         self.beta = beta
-        self.theta_neighborhood = theta_neighborhood
-        self.data_neighborhood = data_neighborhood
-        self.data_steps = data_steps
-        self.theta_steps = theta_steps
-        self.smooth_rate = smooth_rate
-
+        self.optimizer = optimizer
+        self.inner_attack = self.make_attack(0)
         self.orig_state_dict = copy.deepcopy(self.orig_model.state_dict())
 
-        self.inner_attack = self.make_attack(0)
+        self.metric_tracker.report_hparams(
+            "inner_attack",
+            self.inner_attack.__dict__,
+            name=type(self.inner_attack).__name__,
+        )
+
+        self.metric_tracker.report_hparams(
+            "optim",
+            self.optimizer.param_groups[0],
+            name=type(self.optimizer).__name__,
+        )
 
         self.metric_tracker.report_hparams(
             "attack",
-            total_epochs=self.total_epochs,
+            inner_attack=type(self.inner_attack).__name__,
+            attack_builder=inspect.getsource(self.attack_builder_func) if self.attack_builder_func else None,
             beta=self.beta,
-            rho=self.theta_neighborhood,
-            aa=self.data_neighborhood,
-            data_steps=self.data_steps,
-            theta_steps=self.theta_steps,
-            smooth_rate=self.smooth_rate,
         )
 
     def clamped_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         loss_fn = nn.CrossEntropyLoss(reduction="none")
-        loss = torch.mean(torch.clamp(loss_fn(output, target), max=self.beta))  # type: ignore
+        loss = torch.mean(torch.clamp(loss_fn(output, target), max=self.beta))
         return loss
 
     def make_attack(self, epoch_num: int) -> PGD_Theta_Apart:
-        rho_step = self.theta_neighborhood / self.total_epochs
-        eps_step = self.data_neighborhood / self.total_epochs
-        rho_current = rho_step * (epoch_num + 1)
-        eps_current = eps_step * (epoch_num + 1)
-
-        self.inner_attack = PGD_Theta_Apart(
-            eps=eps_current,
-            rho=rho_current,
-            data_steps=self.data_steps,
-            theta_steps=self.theta_steps,
-            random_start=False,
-            eps_for_division=1e-10,
-            smooth_rate=self.smooth_rate,
-        )
-
-        return self.inner_attack
+        if self.attack_builder_func is None:
+            inner_attack = self.inner_attack
+        else:
+            inner_attack = self.attack_builder_func(self.orig_model, epoch_num)
+        return inner_attack
 
     def process_batch(
         self,
@@ -228,8 +232,9 @@ class DM_UAP(UnivAttack):
             _, target_label = torch.max(outputs_ori, dim=1)
 
         self.optimizer.zero_grad()
-        model, x_val = self.inner_attack.forward(model, x_batch, target_label)
 
+        # perturbs x_batch and also modifies the model parameters
+        x_val = self.inner_attack(x_batch, target_label)
         pert = self.pert_model.get_pert(clone=False)
         outputs = model(x_val + pert)
 

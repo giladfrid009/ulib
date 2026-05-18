@@ -10,7 +10,7 @@ if str(module_dir) not in sys.path:
     sys.path.append(str(module_dir))
 
 from scripts.experiment import Experiment
-from ulib.attacks.dm_uap import DM_UAP
+from ulib.attacks.dm_uap import DM_UAP, PGD_Theta_Apart
 
 
 class DM_Experiment(Experiment):
@@ -87,22 +87,37 @@ class DM_Experiment(Experiment):
             type=float,
             default=0.2,
             metavar="FLOAT",
+            help="The smoothing rate used in the GLS loss. Could go either positive or negative.",
         )
 
     def initialize_attack(self, pert_model, evaluator, dl_train, metric_tracker):
         args = self.args()
         optimizer = torch.optim.AdamW(pert_model.parameters(), lr=args.lr)
 
+        # curriculum scheduling parameters
+        total_epochs = args.max_epochs
+        rho_step = args.theta_neighborhood / total_epochs
+        eps_step = args.data_neighborhood / total_epochs
+
+        def attack_builder(model: torch.nn.Module, epoch_num: int) -> PGD_Theta_Apart:
+            rho_current = rho_step * (epoch_num + 1)
+            eps_current = eps_step * (epoch_num + 1)
+
+            return PGD_Theta_Apart(
+                model=model,
+                eps=eps_current,
+                rho=rho_current,
+                data_steps=args.data_steps,
+                theta_steps=args.theta_steps,
+                random_start=False,
+                eps_for_division=1e-10,
+                smooth_rate=args.smooth_rate,
+            )
+
         return DM_UAP(
             pert_model=pert_model,
             optimizer=optimizer,
-            total_epochs=args.max_epochs,
-            beta=args.beta,
-            theta_neighborhood=args.theta_neighborhood,
-            data_neighborhood=args.data_neighborhood,
-            data_steps=args.data_steps,
-            theta_steps=args.theta_steps,
-            smooth_rate=args.smooth_rate,
+            inner_attack=attack_builder,
             # general args
             eval_freq=args.eval_freq,
             evaluator=evaluator,

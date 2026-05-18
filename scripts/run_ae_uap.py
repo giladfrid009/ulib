@@ -117,15 +117,9 @@ class AE_Experiment(Experiment):
         args = self.args()
         optimizer = torch.optim.Adam(pert_model.parameters(), lr=args.lr)
 
-        # compute curriculum scheduling parameters
-        max_steps = args.max_steps
-        if max_steps is None:
-            max_steps = args.max_epochs * len(dl_train)
-
-        eps_start = args.inner_epsilon_start
-        if eps_start is None:
-            eps_start = args.inner_epsilon
-
+        # curriculum scheduling parameters
+        max_steps = args.max_steps if args.max_steps is not None else args.max_epochs * len(dl_train)
+        eps_start = args.inner_epsilon_start if args.inner_epsilon_start is not None else args.inner_epsilon
         eps_max = args.inner_epsilon
         zoom_factor = args.inner_epsilon_zoom
 
